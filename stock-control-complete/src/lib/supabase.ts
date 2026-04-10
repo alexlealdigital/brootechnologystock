@@ -1,0 +1,48 @@
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY
+
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Variáveis de ambiente do Supabase não configuradas')
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+
+export type Product = {
+  id: string
+  user_id: string
+  name: string
+  sku: string
+  category?: string
+  quantity: number
+  min_quantity: number
+  max_quantity: number
+  unit_price: number
+  cost_price: number
+  created_at: string
+  updated_at: string
+}
+
+export type Movement = {
+  id: string
+  user_id: string
+  product_id: string
+  type: 'entrada' | 'saida'
+  quantity: number
+  reason: string
+  movement_reason?: string
+  sale_price?: number
+  notes?: string
+  date: string
+  created_at: string
+}
+
+export type User = {
+  id: string
+  email: string
+  full_name?: string
+  company_name?: string
+  created_at: string
+  updated_at: string
+}
