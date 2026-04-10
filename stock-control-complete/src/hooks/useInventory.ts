@@ -96,7 +96,6 @@ export function useInventory() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Usuário não autenticado')
 
-    // Agora o banco de dados (Trigger) cuida da atualização do estoque automaticamente
     const { data, error: moveError } = await supabase
       .from('movements')
       .insert([{ ...movement, user_id: user.id }])
@@ -105,9 +104,33 @@ export function useInventory() {
 
     if (moveError) throw moveError
 
-    // Recarregamos os dados para refletir as mudanças feitas pelo banco
     await Promise.all([fetchProducts(), fetchMovements()])
     return data
+  }
+
+  // NOVA FUNÇÃO: Atualizar Movimentação
+  const updateMovement = async (id: string, updates: Partial<Movement>) => {
+    const { data, error } = await supabase
+      .from('movements')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    await Promise.all([fetchProducts(), fetchMovements()])
+    return data
+  }
+
+  // NOVA FUNÇÃO: Deletar Movimentação
+  const deleteMovement = async (id: string) => {
+    const { error } = await supabase
+      .from('movements')
+      .delete()
+      .eq('id', id)
+
+    if (error) throw error
+    await Promise.all([fetchProducts(), fetchMovements()])
   }
 
   const getStats = useCallback(async () => {
@@ -150,6 +173,8 @@ export function useInventory() {
     updateProduct,
     deleteProduct,
     addMovement,
+    updateMovement,
+    deleteMovement,
     getStats,
     fetchProducts,
     fetchMovements
