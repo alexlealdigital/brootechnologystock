@@ -3,171 +3,223 @@ import { useLocation } from 'wouter'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Card } from '@/components/ui/Card'
-import { AlertCircle, Loader2 } from 'lucide-react'
-
-type AuthMode = 'login' | 'signup'
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
+import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function Login() {
-  const [mode, setMode] = useState<AuthMode>('login')
+  const [, navigate] = useLocation()
+  const [isLogin, setIsLogin] = useState(true)
+  const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [, setLocation] = useLocation()
-
   const [formData, setFormData] = useState({
     email: '',
     password: '',
     confirmPassword: '',
-    fullName: '',
+    fullName: ''
   })
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError(null)
     setLoading(true)
 
     try {
-      if (mode === 'login') {
+      if (isForgotPassword) {
+        const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+          redirectTo: `${window.location.origin}/login`,
+        })
+        if (error) throw error
+        toast.success('Link de recuperação enviado para seu e-mail!')
+        setIsForgotPassword(false)
+      } else if (isLogin) {
         const { error } = await supabase.auth.signInWithPassword({
           email: formData.email,
           password: formData.password,
         })
         if (error) throw error
+        navigate('/')
       } else {
+        if (formData.password !== formData.confirmPassword) {
+          toast.error('As senhas não coincidem')
+          setLoading(false)
+          return
+        }
         const { error } = await supabase.auth.signUp({
           email: formData.email,
           password: formData.password,
           options: {
-            data: {
-              full_name: formData.fullName,
-            },
-          },
+            data: { full_name: formData.fullName }
+          }
         })
         if (error) throw error
+        toast.success('Conta criada! Verifique seu e-mail para confirmar.')
       }
-
-      setLocation('/')
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro na autenticação')
+    } catch (error: any) {
+      toast.error(error.message || 'Ocorreu um erro inesperado')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen w-full flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md shadow-xl border-0">
-        <div className="p-8">
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-foreground mb-2" style={{ fontFamily: 'Poppins' }}>
-              Estoque
-            </h1>
-            <p className="text-muted-foreground">
-              {mode === 'login' ? 'Faça login na sua conta' : 'Crie uma nova conta'}
-            </p>
+    <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
+      {/* Background Decorativo */}
+      <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+        <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+        <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="w-full max-w-md">
+        <div className="flex flex-col items-center mb-8">
+          <div className="bg-primary p-3 rounded-2xl shadow-lg shadow-primary/20 mb-4">
+            <ShieldCheck className="text-white h-8 w-8" />
           </div>
+          <h1 className="text-3xl font-bold tracking-tight text-foreground" style={{ fontFamily: 'Poppins' }}>
+            Broo <span className="text-primary">Stock</span>
+          </h1>
+          <p className="text-muted-foreground mt-2">Gestão inteligente de inventário</p>
+        </div>
 
-          {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex gap-3">
-              <AlertCircle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
-              <p className="text-sm text-red-700">{error}</p>
-            </div>
-          )}
-
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {mode === 'signup' && (
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Nome Completo
-                </label>
-                <Input
-                  type="text"
-                  value={formData.fullName}
-                  onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                  placeholder="Seu nome completo"
-                  disabled={loading}
-                  required
-                />
-              </div>
-            )}
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Email
-              </label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                placeholder="seu-email@exemplo.com"
-                disabled={loading}
-                required
-              />
-            </div>
-
-            <div>
-              <label className="block text-sm font-medium text-foreground mb-2">
-                Senha
-              </label>
-              <Input
-                type="password"
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                placeholder="Mínimo 6 caracteres"
-                disabled={loading}
-                required
-              />
-            </div>
-
-            {mode === 'signup' && (
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">
-                  Confirmar Senha
-                </label>
-                <Input
-                  type="password"
-                  value={formData.confirmPassword}
-                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  placeholder="Confirme sua senha"
-                  disabled={loading}
-                  required
-                />
-              </div>
-            )}
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white h-10"
-            >
-              {loading ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  {mode === 'login' ? 'Entrando...' : 'Criando conta...'}
-                </>
-              ) : (
-                mode === 'login' ? 'Entrar' : 'Criar Conta'
+        <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-2xl">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl text-center">
+              {isForgotPassword ? 'Recuperar Senha' : isLogin ? 'Bem-vindo de volta' : 'Criar nova conta'}
+            </CardTitle>
+            <CardDescription className="text-center">
+              {isForgotPassword 
+                ? 'Enviaremos um link de alteração para seu e-mail' 
+                : isLogin 
+                  ? 'Entre com suas credenciais para acessar o painel' 
+                  : 'Preencha os dados abaixo para se cadastrar'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              {!isLogin && !isForgotPassword && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground/80 flex items-center gap-2">
+                    <User size={14} /> Nome Completo
+                  </label>
+                  <Input
+                    type="text"
+                    placeholder="Seu nome"
+                    autoComplete="name"
+                    value={formData.fullName}
+                    onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                    required
+                    className="bg-background/50 border-border/50 focus:border-primary/50"
+                  />
+                </div>
               )}
-            </Button>
-          </form>
 
-          <div className="mt-6 text-center">
-            <p className="text-sm text-muted-foreground">
-              {mode === 'login' ? 'Não tem uma conta?' : 'Já tem uma conta?'}{' '}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground/80 flex items-center gap-2">
+                  <Mail size={14} /> E-mail
+                </label>
+                <Input
+                  type="email"
+                  placeholder="exemplo@email.com"
+                  autoComplete="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
+                  className="bg-background/50 border-border/50 focus:border-primary/50"
+                />
+              </div>
+
+              {!isForgotPassword && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center">
+                    <label className="text-sm font-medium text-foreground/80 flex items-center gap-2">
+                      <Lock size={14} /> Senha
+                    </label>
+                    {isLogin && (
+                      <button 
+                        type="button"
+                        onClick={() => setIsForgotPassword(true)}
+                        className="text-xs text-primary hover:underline"
+                      >
+                        Esqueceu a senha?
+                      </button>
+                    )}
+                  </div>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete={isLogin ? "current-password" : "new-password"}
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    className="bg-background/50 border-border/50 focus:border-primary/50"
+                  />
+                </div>
+              )}
+
+              {!isLogin && !isForgotPassword && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-foreground/80 flex items-center gap-2">
+                    <Lock size={14} /> Confirmar Senha
+                  </label>
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    autoComplete="new-password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                    required
+                    className="bg-background/50 border-border/50 focus:border-primary/50"
+                  />
+                </div>
+              )}
+
+              <Button 
+                type="submit" 
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 font-semibold"
+                disabled={loading}
+              >
+                {loading ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <>
+                    {isForgotPassword ? 'Enviar Link' : isLogin ? 'Entrar no Sistema' : 'Cadastrar'}
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </>
+                )}
+              </Button>
+            </form>
+
+            <div className="mt-6 text-center space-y-2">
               <button
                 type="button"
                 onClick={() => {
-                  setMode(mode === 'login' ? 'signup' : 'login')
-                  setError(null)
+                  setIsLogin(!isLogin)
+                  setIsForgotPassword(false)
                 }}
-                className="text-blue-600 hover:text-blue-700 font-medium transition-colors"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {mode === 'login' ? 'Criar conta' : 'Fazer login'}
+                {isForgotPassword 
+                  ? 'Voltar para o Login' 
+                  : isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Entre agora'}
               </button>
-            </p>
-          </div>
-        </div>
-      </Card>
+              {isForgotPassword && (
+                <div>
+                   <button
+                    type="button"
+                    onClick={() => setIsForgotPassword(false)}
+                    className="text-sm text-primary hover:underline"
+                  >
+                    Voltar para o Login
+                  </button>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+        
+        <p className="text-center text-xs text-muted-foreground mt-8">
+          Broo Technology — Todos os Direitos Reservados 2026
+        </p>
+      </div>
     </div>
   )
 }
