@@ -4,38 +4,86 @@ import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
-import { Plus, X, ArrowLeft } from 'lucide-react'
+import { Plus, X, ArrowLeft, Pen, Trash2 } from 'lucide-react'
 
 export default function Movements() {
   const [, navigate] = useLocation()
-  const { products, movements, addMovement, isLoaded } = useInventoryContext()
+  const { products, movements, addMovement, updateMovement, deleteMovement, isLoaded } = useInventoryContext()
   const [showModal, setShowModal] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     product_id: '',
     type: 'entrada' as 'entrada' | 'saida',
     quantity: 0,
     reason: '',
     notes: '',
+    sale_price: 0,
   })
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    try {
-      await addMovement({
-        ...formData,
-        product_id: formData.product_id,
-        date: new Date().toISOString(),
+  const handleOpenModal = (movement?: typeof movements[0]) => {
+    if (movement) {
+      setEditingId(movement.id)
+      setFormData({
+        product_id: movement.product_id,
+        type: movement.type,
+        quantity: movement.quantity,
+        reason: movement.reason,
+        notes: movement.notes || '',
+        sale_price: movement.sale_price || 0,
       })
-      setShowModal(false)
+    } else {
+      setEditingId(null)
       setFormData({
         product_id: '',
         type: 'entrada',
         quantity: 0,
         reason: '',
         notes: '',
+        sale_price: 0,
       })
+    }
+    setShowModal(true)
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    try {
+      const isVenda = formData.type === 'saida' && 
+        (formData.reason.toLowerCase().includes('venda') || formData.reason.toLowerCase() === 'venda')
+
+      const movementData = {
+        ...formData,
+        movement_reason: isVenda ? 'venda' : 'outro',
+        sale_price: isVenda && formData.sale_price === 0 
+          ? (products.find(p => p.id === formData.product_id)?.unit_price || 0)
+          : formData.sale_price,
+        date: editingId 
+          ? movements.find(m => m.id === editingId)?.date 
+          : new Date().toISOString()
+      }
+
+      if (editingId) {
+        // @ts-ignore - updateMovement adicionado ao contexto
+        await updateMovement(editingId, movementData)
+      } else {
+        await addMovement(movementData)
+      }
+      
+      setShowModal(false)
+      setEditingId(null)
     } catch (error) {
-      alert('Erro ao registrar movimentação')
+      alert('Erro ao salvar movimentação')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja excluir esta movimentação? O estoque será recalculado automaticamente.')) {
+      try {
+        // @ts-ignore - deleteMovement adicionado ao contexto
+        await deleteMovement(id)
+      } catch (error) {
+        alert('Erro ao excluir movimentação')
+      }
     }
   }
 
@@ -60,7 +108,7 @@ export default function Movements() {
               Movimentações
             </h1>
           </div>
-          <Button onClick={() => setShowModal(true)} className="bg-primary hover:bg-primary/90 text-primary-foreground">
+          <Button onClick={() => handleOpenModal()} className="bg-primary hover:bg-primary/90 text-primary-foreground">
             <Plus size={18} className="mr-2" />
             Nova Movimentação
           </Button>
@@ -78,13 +126,15 @@ export default function Movements() {
                   <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Tipo</th>
                   <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Quantidade</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Motivo</th>
+                  <th className="px-6 py-4 text-right text-sm font-semibold text-foreground">Venda (R$)</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Data</th>
+                  <th className="px-6 py-4 text-center text-sm font-semibold text-foreground">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {movements.length === 0 ? (
                   <tr>
-                    <td colSpan={5} className="px-6 py-8 text-center text-muted-foreground">
+                    <td colSpan={7} className="px-6 py-8 text-center text-muted-foreground">
                       Nenhuma movimentação registrada
                     </td>
                   </tr>
@@ -112,8 +162,27 @@ export default function Movements() {
                         </td>
                         <td className="px-6 py-4 text-sm text-right text-foreground">{movement.quantity}</td>
                         <td className="px-6 py-4 text-sm text-muted-foreground">{movement.reason}</td>
+                        <td className="px-6 py-4 text-sm text-right text-foreground">
+                          {movement.sale_price ? `R$ ${movement.sale_price.toFixed(2)}` : '-'}
+                        </td>
                         <td className="px-6 py-4 text-sm text-muted-foreground">
                           {new Date(movement.date).toLocaleDateString('pt-BR')}
+                        </td>
+                        <td className="px-6 py-4 text-center">
+                          <div className="flex gap-2 justify-center">
+                            <button
+                              onClick={() => handleOpenModal(movement)}
+                              className="p-2 hover:bg-secondary rounded transition-colors"
+                            >
+                              <Pen size={18} className="text-primary" />
+                            </button>
+                            <button
+                              onClick={() => handleDelete(movement.id)}
+                              className="p-2 hover:bg-secondary rounded transition-colors"
+                            >
+                              <Trash2 size={18} className="text-red-600" />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     )
@@ -131,10 +200,13 @@ export default function Movements() {
           <Card className="w-full max-w-md">
             <div className="flex items-center justify-between p-6 border-b border-border">
               <h3 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'Poppins' }}>
-                Nova Movimentação
+                {editingId ? 'Editar Movimentação' : 'Nova Movimentação'}
               </h3>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={() => {
+                  setShowModal(false)
+                  setEditingId(null)
+                }}
                 className="p-1 hover:bg-secondary rounded transition-colors"
               >
                 <X size={20} />
@@ -148,7 +220,8 @@ export default function Movements() {
                   value={formData.product_id}
                   onChange={(e) => setFormData({ ...formData, product_id: e.target.value })}
                   required
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
+                  disabled={!!editingId} // Evita mudar o produto em uma edição para manter a integridade simples
+                  className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground disabled:opacity-50"
                 >
                   <option value="">Selecione um produto</option>
                   {products.map(p => (
@@ -157,27 +230,28 @@ export default function Movements() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Tipo</label>
-                <select
-                  value={formData.type}
-                  onChange={(e) => setFormData({ ...formData, type: e.target.value as 'entrada' | 'saida' })}
-                  className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
-                >
-                  <option value="entrada">Entrada</option>
-                  <option value="saida">Saída</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-foreground mb-2">Quantidade</label>
-                <Input
-                  type="number"
-                  value={formData.quantity}
-                  onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
-                  min="1"
-                  required
-                />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Tipo</label>
+                  <select
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as 'entrada' | 'saida' })}
+                    className="w-full px-3 py-2 border border-input rounded-md bg-background text-foreground"
+                  >
+                    <option value="entrada">Entrada</option>
+                    <option value="saida">Saída</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Quantidade</label>
+                  <Input
+                    type="number"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 0 })}
+                    min="1"
+                    required
+                  />
+                </div>
               </div>
 
               <div>
@@ -191,6 +265,19 @@ export default function Movements() {
                 />
               </div>
 
+              {formData.type === 'saida' && (
+                <div>
+                  <label className="block text-sm font-medium text-foreground mb-2">Preço de Venda (R$)</label>
+                  <Input
+                    type="number"
+                    value={formData.sale_price}
+                    onChange={(e) => setFormData({ ...formData, sale_price: parseFloat(e.target.value) || 0 })}
+                    min="0"
+                    step="0.01"
+                  />
+                </div>
+              )}
+
               <div>
                 <label className="block text-sm font-medium text-foreground mb-2">Notas</label>
                 <textarea
@@ -203,11 +290,19 @@ export default function Movements() {
               </div>
 
               <div className="flex gap-3 pt-4">
-                <Button type="button" onClick={() => setShowModal(false)} variant="outline" className="flex-1">
+                <Button 
+                  type="button" 
+                  onClick={() => {
+                    setShowModal(false)
+                    setEditingId(null)
+                  }} 
+                  variant="outline" 
+                  className="flex-1"
+                >
                   Cancelar
                 </Button>
                 <Button type="submit" className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground">
-                  Registrar
+                  {editingId ? 'Salvar Alterações' : 'Registrar'}
                 </Button>
               </div>
             </form>
