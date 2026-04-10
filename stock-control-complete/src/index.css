@@ -4,30 +4,31 @@
 
 @layer base {
   :root {
-    /* Tema Dark Premium por Padrão */
-    --background: 222 47% 11%;      /* Cinza muito escuro, quase preto azulado */
-    --foreground: 210 40% 98%;
-    
-    --card: 222 47% 13%;            /* Card levemente mais claro que o fundo */
-    --card-foreground: 210 40% 98%;
-    
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
-    
-    --primary: 217 91% 60%;         /* Azul vibrante equilibrado */
-    --primary-foreground: 222.2 47.6% 11.2%;
-    
-    --secondary: 222 47% 18%;       /* Para estados de hover e detalhes secundários */
-    --secondary-foreground: 210 40% 98%;
-    
-    --muted: 222 47% 18%;
-    --muted-foreground: 215 20.2% 65.1%;
-    
-    --accent: 217 91% 60%;
-    --accent-foreground: 210 40% 98%;
-    
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --background: 195 60% 15%;      /* Antes: 222 47% 11% */
+  
+  --foreground: 210 40% 98%;
+  
+  --card: 195 60% 18%;            /* Ajustado para harmonizar */
+  --card-foreground: 210 40% 98%;
+  
+  --popover: 195 60% 15%;
+  --popover-foreground: 210 40% 98%;
+  
+  /* Opcional: ajustar primary para combinar com o petróleo */
+  --primary: 190 80% 45%;         /* Turquesa/petróleo mais vibrante */
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 195 50% 22%;
+  --secondary-foreground: 210 40% 98%;
+  
+  --muted: 195 50% 22%;
+  --muted-foreground: 195 20% 65%;
+  
+  --accent: 190 80% 45%;
+  --accent-foreground: 0 0% 100%;
+  
+  --destructive: 0 62.8% 30.6%;
+  --destructive-foreground: 210 40% 98%;
     
     --border: 222 47% 20%;          /* Bordas sutis para separar elementos */
     --input: 222 47% 20%;
