@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 222 60% 80%;      /* Antes: 222 47% 11% */
+    --background: 100 80% 80%;      /* Antes: 222 47% 11% */
   
   --foreground: 210 40% 98%;
   
