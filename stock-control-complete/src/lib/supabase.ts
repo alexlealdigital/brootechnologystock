@@ -34,17 +34,17 @@ export type Movement = {
   movement_reason?: string
   sale_channel?: 'venda_local' | 'representante' | 'distribuidor'
   payment_method?: 'credito' | 'debito' | 'pix' | 'boleto'
+  fee_amount?: number
   sale_price?: number
   notes?: string
   date: string
   created_at: string
 }
 
-export type User = {
+export type PaymentSetting = {
   id: string
-  email: string
-  full_name?: string
-  company_name?: string
-  created_at: string
+  user_id: string
+  method_name: 'credito' | 'debito' | 'pix' | 'boleto'
+  fee_percentage: number
   updated_at: string
 }
