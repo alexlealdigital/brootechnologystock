@@ -30,8 +30,10 @@ export type Movement = {
   product_id: string
   type: 'entrada' | 'saida'
   quantity: number
-  reason: string
+  reason: 'compra' | 'venda' | 'devolucao'
   movement_reason?: string
+  sale_channel?: 'venda_local' | 'representante' | 'distribuidor'
+  payment_method?: 'credito' | 'debito' | 'pix' | 'boleto'
   sale_price?: number
   notes?: string
   date: string
