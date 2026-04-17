@@ -25,6 +25,27 @@ export function useInventory() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
+  const addProduct = async (product: any) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from('products').insert([{ ...product, user_id: user.id }])
+    await fetchData()
+  }
+
+  const updateProduct = async (id: string, updates: any) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from("products").update(updates).eq("id", id).eq("user_id", user.id)
+    await fetchData()
+  }
+
+  const deleteProduct = async (id: string) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    await supabase.from("products").delete().eq("id", id).eq("user_id", user.id)
+    await fetchData()
+  }
+
   const addMovement = async (movement: any) => {
     const { data: { user } } = await supabase.auth.getUser()
     let fee_amount = 0
@@ -62,5 +83,5 @@ export function useInventory() {
     }
   }, [products, movements])
 
-  return { products, movements, paymentSettings, isLoaded, addMovement, updatePaymentSettings, getStats }
+  return { products, movements, paymentSettings, isLoaded, addProduct, updateProduct, deleteProduct, addMovement, updatePaymentSettings, getStats }
 }
