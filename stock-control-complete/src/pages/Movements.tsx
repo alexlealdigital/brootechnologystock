@@ -22,8 +22,10 @@ export default function Movements() {
     notes: '',
     sale_price: 0,
   })
+  const [error, setError] = useState<string | null>(null)
 
   const handleOpenModal = (movement?: any) => {
+    setError(null)
     if (movement) {
       setEditingId(movement.id)
       setFormData({
@@ -55,16 +57,24 @@ export default function Movements() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
+      setError(null)
+      
+      if (!formData.product_id) {
+        setError('Selecione um produto')
+        return
+      }
+      
+      if (formData.quantity <= 0) {
+        setError('A quantidade deve ser maior que 0')
+        return
+      }
+
       const isVenda = formData.type === 'saida' && formData.reason === 'venda'
       const movementData = {
         ...formData,
-        movement_reason: isVenda ? 'venda' : 'outro',
         sale_price: isVenda && formData.sale_price === 0 
           ? (products.find(p => p.id === formData.product_id)?.unit_price || 0)
           : formData.sale_price,
-        date: editingId 
-          ? movements.find(m => m.id === editingId)?.date 
-          : new Date().toISOString()
       }
 
       if (editingId) {
@@ -72,10 +82,31 @@ export default function Movements() {
       } else {
         await addMovement(movementData)
       }
+      
       setShowModal(false)
       setEditingId(null)
-    } catch (error) {
-      alert('Erro ao salvar movimentação')
+      setFormData({
+        product_id: '',
+        type: 'entrada',
+        quantity: 0,
+        reason: 'compra',
+        sale_channel: 'venda_local',
+        payment_method: 'credito',
+        notes: '',
+        sale_price: 0,
+      })
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar movimentação')
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (confirm('Tem certeza que deseja deletar esta movimentação?')) {
+      try {
+        await deleteMovement(id)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Erro ao deletar movimentação')
+      }
     }
   }
 
@@ -97,49 +128,85 @@ export default function Movements() {
       </header>
 
       <main className="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
-        <Card className="overflow-x-auto">
-          <table className="w-full text-left">
-            <thead className="bg-secondary/50">
-              <tr>
-                <th className="p-4">Produto</th>
-                <th className="p-4">Tipo</th>
-                <th className="p-4">Qtd.</th>
-                <th className="p-4">Motivo</th>
-                <th className="p-4">Canal</th>
-                <th className="p-4">Pagamento</th>
-                <th className="p-4">Ações</th>
-              </tr>
-            </thead>
-            <tbody>
-              {movements.map((m) => (
-                <tr key={m.id} className="border-b">
-                  <td className="p-4">{products.find(p => p.id === m.product_id)?.name}</td>
-                  <td className="p-4 capitalize">{m.type}</td>
-                  <td className="p-4">{m.quantity}</td>
-                  <td className="p-4 capitalize">{m.reason}</td>
-                  <td className="p-4 capitalize">{m.sale_channel?.replace('_', ' ')}</td>
-                  <td className="p-4 capitalize">{m.payment_method}</td>
-                  <td className="p-4 flex gap-2">
-                    <button onClick={() => handleOpenModal(m)} className="p-1 text-primary"><Pen size={16} /></button>
-                    <button onClick={() => deleteMovement(m.id)} className="p-1 text-destructive"><Trash2 size={16} /></button>
-                  </td>
+        {movements.length === 0 ? (
+          <Card className="p-8 text-center">
+            <p className="text-muted-foreground">Nenhuma movimentação registrada</p>
+          </Card>
+        ) : (
+          <Card className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead className="bg-secondary/50">
+                <tr>
+                  <th className="p-4">Produto</th>
+                  <th className="p-4">Tipo</th>
+                  <th className="p-4">Qtd.</th>
+                  <th className="p-4">Motivo</th>
+                  <th className="p-4">Canal</th>
+                  <th className="p-4">Pagamento</th>
+                  <th className="p-4">Preço</th>
+                  <th className="p-4">Ações</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </Card>
+              </thead>
+              <tbody>
+                {movements.map((m) => (
+                  <tr key={m.id} className="border-b hover:bg-secondary/30">
+                    <td className="p-4">{products.find(p => p.id === m.product_id)?.name || 'Produto não encontrado'}</td>
+                    <td className="p-4 capitalize">{m.type}</td>
+                    <td className="p-4">{m.quantity}</td>
+                    <td className="p-4 capitalize">{m.reason}</td>
+                    <td className="p-4 capitalize">{m.sale_channel?.replace('_', ' ') || '-'}</td>
+                    <td className="p-4 capitalize">{m.payment_method || '-'}</td>
+                    <td className="p-4">R$ {(m.sale_price || 0).toFixed(2)}</td>
+                    <td className="p-4 flex gap-2">
+                      <button 
+                        onClick={() => handleOpenModal(m)} 
+                        className="p-1 text-primary hover:bg-primary/10 rounded"
+                        title="Editar"
+                      >
+                        <Pen size={16} />
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(m.id)} 
+                        className="p-1 text-destructive hover:bg-destructive/10 rounded"
+                        title="Deletar"
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </Card>
+        )}
       </main>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 overflow-y-auto">
-          <Card className="w-full max-w-md bg-card p-6 relative">
-            <button onClick={() => setShowModal(false)} className="absolute top-4 right-4"><X size={20} /></button>
+          <Card className="w-full max-w-md bg-card p-6 relative my-8">
+            <button 
+              onClick={() => setShowModal(false)} 
+              className="absolute top-4 right-4 hover:bg-secondary p-1 rounded"
+            >
+              <X size={20} />
+            </button>
             <h3 className="text-xl font-bold mb-6">{editingId ? 'Editar' : 'Nova'} Movimentação</h3>
+            
+            {error && (
+              <div className="mb-4 p-3 bg-destructive/10 text-destructive rounded text-sm">
+                {error}
+              </div>
+            )}
             
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm mb-1">Produto</label>
-                <select value={formData.product_id} onChange={e => setFormData({...formData, product_id: e.target.value})} className="w-full p-2 border rounded bg-background" required>
+                <label className="block text-sm mb-1 font-medium">Produto *</label>
+                <select 
+                  value={formData.product_id} 
+                  onChange={e => setFormData({...formData, product_id: e.target.value})} 
+                  className="w-full p-2 border rounded bg-background"
+                  required
+                >
                   <option value="">Selecione...</option>
                   {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
                 </select>
@@ -147,21 +214,35 @@ export default function Movements() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm mb-1">Tipo</label>
-                  <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})} className="w-full p-2 border rounded bg-background">
+                  <label className="block text-sm mb-1 font-medium">Tipo *</label>
+                  <select 
+                    value={formData.type} 
+                    onChange={e => setFormData({...formData, type: e.target.value as any})} 
+                    className="w-full p-2 border rounded bg-background"
+                  >
                     <option value="entrada">Entrada</option>
                     <option value="saida">Saída</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm mb-1">Quantidade</label>
-                  <Input type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseInt(e.target.value)})} required />
+                  <label className="block text-sm mb-1 font-medium">Quantidade *</label>
+                  <Input 
+                    type="number" 
+                    min="1"
+                    value={formData.quantity} 
+                    onChange={e => setFormData({...formData, quantity: parseInt(e.target.value) || 0})} 
+                    required 
+                  />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Motivo</label>
-                <select value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value as any})} className="w-full p-2 border rounded bg-background">
+                <label className="block text-sm mb-1 font-medium">Motivo *</label>
+                <select 
+                  value={formData.reason} 
+                  onChange={e => setFormData({...formData, reason: e.target.value as any})} 
+                  className="w-full p-2 border rounded bg-background"
+                >
                   <option value="compra">Compra</option>
                   <option value="venda">Venda</option>
                   <option value="devolucao">Devolução</option>
@@ -169,8 +250,12 @@ export default function Movements() {
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Canal de Venda</label>
-                <select value={formData.sale_channel} onChange={e => setFormData({...formData, sale_channel: e.target.value as any})} className="w-full p-2 border rounded bg-background">
+                <label className="block text-sm mb-1 font-medium">Canal de Venda</label>
+                <select 
+                  value={formData.sale_channel} 
+                  onChange={e => setFormData({...formData, sale_channel: e.target.value as any})} 
+                  className="w-full p-2 border rounded bg-background"
+                >
                   <option value="venda_local">Venda Local</option>
                   <option value="representante">Representante</option>
                   <option value="distribuidor">Distribuidor</option>
@@ -179,28 +264,48 @@ export default function Movements() {
 
               {formData.type === 'saida' && (
                 <div>
-                  <label className="block text-sm mb-1">Preço de Venda</label>
-                  <Input type="number" step="0.01" value={formData.sale_price} onChange={e => setFormData({...formData, sale_price: parseFloat(e.target.value)})} />
+                  <label className="block text-sm mb-1 font-medium">Preço de Venda</label>
+                  <Input 
+                    type="number" 
+                    step="0.01"
+                    min="0"
+                    value={formData.sale_price} 
+                    onChange={e => setFormData({...formData, sale_price: parseFloat(e.target.value) || 0})} 
+                  />
                 </div>
               )}
 
               <div>
-                <label className="block text-sm mb-2">Forma de Pagamento</label>
+                <label className="block text-sm mb-2 font-medium">Forma de Pagamento</label>
                 <div className="space-y-1">
                   {['credito', 'debito', 'pix', 'boleto'].map(m => (
-                    <label key={m} className="flex items-center gap-2 text-sm capitalize">
-                      <input type="radio" name="pay" checked={formData.payment_method === m} onChange={() => setFormData({...formData, payment_method: m as any})} /> {m}
+                    <label key={m} className="flex items-center gap-2 text-sm capitalize cursor-pointer">
+                      <input 
+                        type="radio" 
+                        name="pay" 
+                        checked={formData.payment_method === m} 
+                        onChange={() => setFormData({...formData, payment_method: m as any})} 
+                      /> 
+                      {m}
                     </label>
                   ))}
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm mb-1">Notas</label>
-                <textarea value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value})} className="w-full p-2 border rounded bg-background" rows={2} />
+                <label className="block text-sm mb-1 font-medium">Notas</label>
+                <textarea 
+                  value={formData.notes} 
+                  onChange={e => setFormData({...formData, notes: e.target.value})} 
+                  className="w-full p-2 border rounded bg-background" 
+                  rows={2}
+                  placeholder="Observações adicionais..."
+                />
               </div>
 
-              <Button type="submit" className="w-full bg-primary text-white">Salvar</Button>
+              <Button type="submit" className="w-full bg-primary text-white">
+                {editingId ? 'Atualizar' : 'Criar'} Movimentação
+              </Button>
             </form>
           </Card>
         </div>
