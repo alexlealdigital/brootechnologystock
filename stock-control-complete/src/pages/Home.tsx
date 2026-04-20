@@ -9,21 +9,70 @@ import { Input } from '@/components/ui/Input'
 
 export default function Home() {
   const [, navigate] = useLocation()
-  const { isLoaded, getStats, paymentSettings, updatePaymentSettings } = useInventoryContext()
-  const [stats, setStats] = useState<any>({})
+  const { isLoaded, getStats, movements, products, paymentSettings, updatePaymentSettings } = useInventoryContext()
+  const [stats, setStats] = useState<any>({
+    totalRevenue: 0,
+    totalFees: 0,
+    totalProfit: 0,
+    totalProducts: 0,
+    totalQuantity: 0,
+    lowStock: 0,
+    inventoryValue: 0
+  })
   const [showSettings, setShowSettings] = useState(false)
   const [fees, setFees] = useState<any>({ credito: 0, debito: 0, pix: 0, boleto: 0 })
 
+  // Atualizar stats sempre que movements, products ou paymentSettings mudarem
   useEffect(() => {
     if (isLoaded) {
-      getStats().then(setStats)
+      getStats().then(newStats => {
+        setStats(newStats || {
+          totalRevenue: 0,
+          totalFees: 0,
+          totalProfit: 0,
+          totalProducts: 0,
+          totalQuantity: 0,
+          lowStock: 0,
+          inventoryValue: 0
+        })
+      })
+    }
+  }, [isLoaded, movements, products, paymentSettings, getStats])
+
+  // Atualizar taxas quando paymentSettings mudarem
+  useEffect(() => {
+    if (paymentSettings.length > 0) {
       const newFees = { credito: 0, debito: 0, pix: 0, boleto: 0 }
-      paymentSettings.forEach(s => { if (s.method_name in newFees) newFees[s.method_name as keyof typeof newFees] = s.fee_percentage })
+      paymentSettings.forEach(s => {
+        if (s.method_name in newFees) {
+          newFees[s.method_name as keyof typeof newFees] = s.fee_percentage
+        }
+      })
       setFees(newFees)
     }
-  }, [isLoaded, getStats, paymentSettings])
+  }, [paymentSettings])
 
   const formatCurrency = (v: number) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+
+  const handleSaveSettings = async () => {
+    try {
+      await updatePaymentSettings(Object.entries(fees).map(([n, v]) => ({
+        method_name: n,
+        fee_percentage: v
+      })))
+      setShowSettings(false)
+    } catch (error) {
+      alert('Erro ao salvar configurações de taxa')
+    }
+  }
+
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen bg-background p-6 flex items-center justify-center">
+        <p className="text-muted-foreground">Carregando...</p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-background p-6">
@@ -33,10 +82,28 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-        <StatCard title="Faturamento Bruto" value={formatCurrency(stats.totalRevenue)} icon={<Wallet className="text-primary" />} />
-        <StatCard title="Total Taxas" value={formatCurrency(stats.totalFees)} icon={<Percent className="text-orange-500" />} color="text-orange-500" />
-        <StatCard title="Lucro Líquido" value={formatCurrency(stats.totalProfit)} icon={<BarChart3 className="text-green-500" />} color="text-green-500" />
-        <StatCard title="Margem Líquida" value={`${stats.totalRevenue > 0 ? ((stats.totalProfit / stats.totalRevenue) * 100).toFixed(1) : 0}%`} icon={<TrendingUp className="text-purple-500" />} />
+        <StatCard 
+          title="Faturamento Bruto" 
+          value={formatCurrency(stats.totalRevenue || 0)} 
+          icon={<Wallet className="text-primary" />} 
+        />
+        <StatCard 
+          title="Total Taxas" 
+          value={formatCurrency(stats.totalFees || 0)} 
+          icon={<Percent className="text-orange-500" />} 
+          color="text-orange-500" 
+        />
+        <StatCard 
+          title="Lucro Líquido" 
+          value={formatCurrency(stats.totalProfit || 0)} 
+          icon={<BarChart3 className="text-green-500" />} 
+          color="text-green-500" 
+        />
+        <StatCard 
+          title="Margem Líquida" 
+          value={`${stats.totalRevenue > 0 ? ((stats.totalProfit / stats.totalRevenue) * 100).toFixed(1) : 0}%`} 
+          icon={<TrendingUp className="text-purple-500" />} 
+        />
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -53,10 +120,15 @@ export default function Home() {
             {Object.entries(fees).map(([name, val]: any) => (
               <div key={name} className="mb-3">
                 <label className="block text-sm capitalize mb-1">{name}</label>
-                <Input type="number" value={val} onChange={e => setFees({...fees, [name]: parseFloat(e.target.value)})} />
+                <Input 
+                  type="number" 
+                  step="0.01"
+                  value={val} 
+                  onChange={e => setFees({...fees, [name]: parseFloat(e.target.value) || 0})} 
+                />
               </div>
             ))}
-            <Button onClick={() => { updatePaymentSettings(Object.entries(fees).map(([n, v]) => ({method_name: n, fee_percentage: v}))); setShowSettings(false); }} className="w-full mt-4">Salvar</Button>
+            <Button onClick={handleSaveSettings} className="w-full mt-4">Salvar</Button>
           </Card>
         </div>
       )}
