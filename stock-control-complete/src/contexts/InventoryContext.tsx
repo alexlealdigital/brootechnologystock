@@ -8,12 +8,13 @@ interface InventoryContextType {
   isLoaded: boolean
   isLoading: boolean
   error: string | null
-  addProduct: (product: any) => Promise<Product>
-  updateProduct: (id: string, updates: any) => Promise<Product>
+  addProduct: (product: any) => Promise<void>
+  updateProduct: (id: string, updates: any) => Promise<void>
   deleteProduct: (id: string) => Promise<void>
-  addMovement: (movement: any) => Promise<Movement>
-  updateMovement: (id: string, updates: any) => Promise<Movement>
+  addMovement: (movement: any) => Promise<void>
+  updateMovement: (id: string, updates: any) => Promise<void>
   deleteMovement: (id: string) => Promise<void>
+  updatePaymentSettings: (settings: any[]) => Promise<void>
   getStats: () => Promise<any>
 }
 
