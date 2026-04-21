@@ -5,6 +5,9 @@ import { Product, Movement } from '@/lib/supabase'
 interface InventoryContextType {
   products: Product[]
   movements: Movement[]
+  paymentSettings: any[]
+  entities: any[]
+  channels: any[]
   isLoaded: boolean
   isLoading: boolean
   error: string | null
@@ -15,6 +18,8 @@ interface InventoryContextType {
   updateMovement: (id: string, updates: any) => Promise<void>
   deleteMovement: (id: string) => Promise<void>
   updatePaymentSettings: (settings: any[]) => Promise<void>
+  addEntity: (entity: any) => Promise<void>
+  addChannel: (channel: any) => Promise<void>
   getStats: () => Promise<any>
 }
 
