@@ -4,7 +4,7 @@ import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
-import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Users, ShoppingBag } from 'lucide-react'
+import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Users, ShoppingBag, Image as ImageIcon } from 'lucide-react'
 import { Footer } from '@/components/ui/Footer'
 
 export default function Movements() {
@@ -97,25 +97,35 @@ export default function Movements() {
               </tr>
             </thead>
             <tbody>
-              {movements.map((m) => (
-                <tr key={m.id} className="border-b hover:bg-secondary/30">
-                  <td className="p-4 text-xs">{new Date(m.date).toLocaleDateString('pt-BR')}</td>
-                  <td className="p-4 font-medium">{products.find(p => p.id === m.product_id)?.name}</td>
-                  <td className="p-4 capitalize"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${m.type === 'entrada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{m.type}</span></td>
-                  <td className="p-4">{m.quantity}</td>
-                  <td className="p-4">R$ {(m.sale_price || 0).toFixed(2)}</td>
-                  <td className="p-4">
-                    <div className="text-xs space-y-0.5">
-                      {m.channel_id && <div className="flex items-center gap-1"><ShoppingBag size={10}/> {channels.find(c => c.id === m.channel_id)?.name}</div>}
-                      {m.entity_id && <div className="flex items-center gap-1 text-muted-foreground"><Users size={10}/> {entities.find(e => e.id === m.entity_id)?.name}</div>}
-                    </div>
-                  </td>
-                  <td className="p-4 flex gap-2">
-                    <button onClick={() => handleOpenModal(m)} className="p-1 text-primary hover:bg-primary/10 rounded"><Pen size={16} /></button>
-                    <button onClick={() => deleteMovement(m.id)} className="p-1 text-destructive hover:bg-destructive/10 rounded"><Trash2 size={16} /></button>
-                  </td>
-                </tr>
-              ))}
+              {movements.map((m) => {
+                const product = products.find(p => p.id === m.product_id);
+                return (
+                  <tr key={m.id} className="border-b hover:bg-secondary/30">
+                    <td className="p-4 text-xs">{new Date(m.date).toLocaleDateString('pt-BR')}</td>
+                    <td className="p-4">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 bg-secondary rounded flex items-center justify-center overflow-hidden shrink-0 border border-border/50">
+                          {product?.image_url ? <img src={product.image_url} alt={product.name} className="w-full h-full object-cover" /> : <ImageIcon className="text-muted-foreground" size={16} />}
+                        </div>
+                        <span className="font-medium">{product?.name || 'Produto Removido'}</span>
+                      </div>
+                    </td>
+                    <td className="p-4 capitalize"><span className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${m.type === 'entrada' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>{m.type}</span></td>
+                    <td className="p-4">{m.quantity}</td>
+                    <td className="p-4">R$ {(m.sale_price || 0).toFixed(2)}</td>
+                    <td className="p-4">
+                      <div className="text-xs space-y-0.5">
+                        {m.channel_id && <div className="flex items-center gap-1"><ShoppingBag size={10}/> {channels.find(c => c.id === m.channel_id)?.name}</div>}
+                        {m.entity_id && <div className="flex items-center gap-1 text-muted-foreground"><Users size={10}/> {entities.find(e => e.id === m.entity_id)?.name}</div>}
+                      </div>
+                    </td>
+                    <td className="p-4 flex gap-2">
+                      <button onClick={() => handleOpenModal(m)} className="p-1 text-primary hover:bg-primary/10 rounded"><Pen size={16} /></button>
+                      <button onClick={() => deleteMovement(m.id)} className="p-1 text-destructive hover:bg-destructive/10 rounded"><Trash2 size={16} /></button>
+                    </td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
         </Card>
@@ -131,30 +141,35 @@ export default function Movements() {
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-1">Produto *</label>
-                <select value={formData.product_id} onChange={e => setFormData({...formData, product_id: e.target.value})} className="w-full p-2 border rounded bg-background" required>
-                  <option value="">Selecione...</option>
-                  {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
-                </select>
+                <div className="flex gap-3">
+                  <div className="w-12 h-12 bg-secondary rounded flex items-center justify-center overflow-hidden shrink-0 border border-border/50">
+                    {products.find(p => p.id === formData.product_id)?.image_url ? <img src={products.find(p => p.id === formData.product_id)?.image_url} className="w-full h-full object-cover" /> : <ImageIcon className="text-muted-foreground" size={20} />}
+                  </div>
+                  <select value={formData.product_id} onChange={e => setFormData({...formData, product_id: e.target.value})} className="flex-grow p-2 border border-input rounded bg-background" required>
+                    <option value="">Selecione...</option>
+                    {products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
+                  </select>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Tipo</label>
-                  <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})} className="w-full p-2 border rounded bg-background">
+                  <select value={formData.type} onChange={e => setFormData({...formData, type: e.target.value as any})} className="w-full p-2 border border-input rounded bg-background">
                     <option value="entrada">Entrada</option>
                     <option value="saida">Saída</option>
                   </select>
                 </div>
                 <div>
                   <label className="block text-sm font-medium mb-1">Quantidade</label>
-                  <Input type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseInt(e.target.value)})} required />
+                  <Input type="number" value={formData.quantity} onChange={e => setFormData({...formData, quantity: parseInt(e.target.value) || 0})} required />
                 </div>
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1">Motivo</label>
-                  <select value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value as any})} className="w-full p-2 border rounded bg-background">
+                  <select value={formData.reason} onChange={e => setFormData({...formData, reason: e.target.value as any})} className="w-full p-2 border border-input rounded bg-background">
                     <option value="compra">Compra</option>
                     <option value="venda">Venda</option>
                     <option value="devolucao">Devolução</option>
@@ -163,7 +178,7 @@ export default function Movements() {
                 {formData.type === 'saida' && (
                   <div>
                     <label className="block text-sm font-medium mb-1">Preço Venda</label>
-                    <Input type="number" step="0.01" value={formData.sale_price} onChange={e => setFormData({...formData, sale_price: parseFloat(e.target.value)})} />
+                    <Input type="number" step="0.01" value={formData.sale_price} onChange={e => setFormData({...formData, sale_price: parseFloat(e.target.value) || 0})} />
                   </div>
                 )}
               </div>
@@ -171,14 +186,14 @@ export default function Movements() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium mb-1 flex items-center gap-1"><ShoppingBag size={14}/> Canal</label>
-                  <select value={formData.channel_id} onChange={e => setFormData({...formData, channel_id: e.target.value})} className="w-full p-2 border rounded bg-background">
+                  <select value={formData.channel_id} onChange={e => setFormData({...formData, channel_id: e.target.value})} className="w-full p-2 border border-input rounded bg-background">
                     <option value="">Nenhum</option>
                     {channels.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1 flex items-center gap-1"><Users size={14}/> Entidade (Cliente/Fornec.)</label>
-                  <select value={formData.entity_id} onChange={e => setFormData({...formData, entity_id: e.target.value})} className="w-full p-2 border rounded bg-background">
+                  <label className="block text-sm font-medium mb-1 flex items-center gap-1"><Users size={14}/> Entidade</label>
+                  <select value={formData.entity_id} onChange={e => setFormData({...formData, entity_id: e.target.value})} className="w-full p-2 border border-input rounded bg-background">
                     <option value="">Nenhuma</option>
                     {entities.map(ent => <option key={ent.id} value={ent.id}>{ent.name} ({ent.type})</option>)}
                   </select>
@@ -196,7 +211,7 @@ export default function Movements() {
                 </div>
               </div>
 
-              <Button type="submit" className="w-full bg-primary text-white py-4">Salvar Movimentação</Button>
+              <Button type="submit" className="w-full bg-primary text-white py-4 font-bold">Salvar Movimentação</Button>
             </form>
           </Card>
         </div>
