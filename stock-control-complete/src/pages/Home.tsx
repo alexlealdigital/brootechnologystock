@@ -3,16 +3,15 @@ import { useLocation } from 'wouter'
 import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, PieChart, Users } from 'lucide-react'
+import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, Image as ImageIcon, AlertTriangle } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 
 export default function Home() {
   const [, navigate] = useLocation()
   const { isLoaded, getStats, movements, products, paymentSettings, updatePaymentSettings } = useInventoryContext()
   const [stats, setStats] = useState<any>({
-    totalRevenue: 0, totalFees: 0, totalProfit: 0, totalProducts: 0, totalQuantity: 0,
-    lowStock: 0, inventoryValue: 0, ticketMedio: 0, weightedFeeRate: 0,
-    topProductsByVolume: [], topProductsByProfit: [], paymentMethodsDist: {}
+    totalRevenue: 0, totalFees: 0, totalProfit: 0, inventoryValue: 0, ticketMedio: 0,
+    topProductsByProfit: [], lowStockList: []
   })
   const [showSettings, setShowSettings] = useState(false)
   const [fees, setFees] = useState<any>({ credito: 0, debito: 0, pix: 0, boleto: 0 })
@@ -39,51 +38,67 @@ export default function Home() {
     <div className="min-h-screen bg-background p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Broo <span className="text-primary">Stock</span> <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded ml-2">PRO</span></h1>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowSettings(true)} variant="ghost" size="sm"><Settings size={18} className="mr-2" /> Taxas</Button>
-        </div>
+        <Button onClick={() => setShowSettings(true)} variant="ghost" size="sm"><Settings size={18} className="mr-2" /> Taxas</Button>
       </div>
 
-      {/* Linha 1: Financeiro Resumido */}
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Wallet size={20} className="text-primary" /> Financeiro Executivo</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard title="Faturamento" value={formatCurrency(stats.totalRevenue)} icon={<Wallet className="text-primary" />} />
         <StatCard title="Lucro Líquido" value={formatCurrency(stats.totalProfit)} icon={<BarChart3 className="text-green-500" />} color="text-green-500" />
         <StatCard title="Margem" value={`${stats.totalRevenue > 0 ? ((stats.totalProfit / stats.totalRevenue) * 100).toFixed(1) : 0}%`} icon={<TrendingUp className="text-purple-500" />} />
         <StatCard title="Valor Estoque" value={formatCurrency(stats.inventoryValue)} icon={<Package className="text-blue-500" />} />
-        <StatCard title="Ticket Médio" value={formatCurrency(stats.ticketMedio)} icon={<ShoppingBag className="text-orange-500" />} />
-        <StatCard title="Taxa Média" value={`${(stats.weightedFeeRate || 0).toFixed(2)}%`} icon={<Percent className="text-red-500" />} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-        {/* Top Produtos por Lucro */}
+        {/* Top 5 Lucrativos com Miniatura */}
         <Card className="p-6">
-          <h3 className="text-md font-bold mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-green-500" /> Top 5 Produtos Mais Lucrativos</h3>
-          <div className="space-y-4">
+          <h3 className="text-md font-bold mb-4 flex items-center gap-2 text-green-500"><TrendingUp size={18} /> Top 5 Produtos Mais Lucrativos</h3>
+          <div className="space-y-3">
             {stats.topProductsByProfit.length > 0 ? stats.topProductsByProfit.map((p: any, i: number) => (
-              <div key={i} className="flex justify-between items-center border-b pb-2 last:border-0">
-                <span className="text-sm font-medium">{p.name}</span>
+              <div key={i} className="flex justify-between items-center border-b border-border/50 pb-2 last:border-0">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-secondary rounded flex items-center justify-center overflow-hidden shrink-0">
+                    {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <ImageIcon size={14} className="text-muted-foreground" />}
+                  </div>
+                  <span className="text-sm font-medium truncate max-w-[150px]">{p.name}</span>
+                </div>
                 <span className="text-sm font-bold text-green-600">{formatCurrency(p.profit)}</span>
               </div>
-            )) : <p className="text-sm text-muted-foreground">Nenhuma venda registrada.</p>}
+            )) : <p className="text-sm text-muted-foreground">Sem dados de lucro.</p>}
           </div>
         </Card>
 
-        {/* Distribuição por Pagamento */}
+        {/* Produtos com Estoque Baixo */}
         <Card className="p-6">
-          <h3 className="text-md font-bold mb-4 flex items-center gap-2"><PieChart size={18} className="text-primary" /> Vendas por Meio de Pagamento</h3>
-          <div className="space-y-4">
-            {Object.entries(stats.paymentMethodsDist).length > 0 ? Object.entries(stats.paymentMethodsDist).map(([method, value]: any) => (
-              <div key={method} className="space-y-1">
-                <div className="flex justify-between text-xs">
-                  <span className="capitalize">{method}</span>
-                  <span>{formatCurrency(value)}</span>
-                </div>
-                <div className="w-full bg-secondary h-2 rounded-full overflow-hidden">
-                  <div className="bg-primary h-full" style={{ width: `${(value / stats.totalRevenue) * 100}%` }}></div>
-                </div>
-              </div>
-            )) : <p className="text-sm text-muted-foreground">Nenhuma venda registrada.</p>}
+          <h3 className="text-md font-bold mb-4 flex items-center gap-2 text-red-500"><AlertTriangle size={18} /> Produtos com Estoque Baixo</h3>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="text-muted-foreground border-b border-border/50">
+                <tr>
+                  <th className="pb-2 font-medium">Produto</th>
+                  <th className="pb-2 font-medium">SKU</th>
+                  <th className="pb-2 font-medium text-center">Qtd</th>
+                  <th className="pb-2 font-medium text-center">Mín</th>
+                  <th className="pb-2 font-medium text-right">Falta</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stats.lowStockList.length > 0 ? stats.lowStockList.map((p: any) => (
+                  <tr key={p.id} className="border-b border-border/30 last:border-0">
+                    <td className="py-2 flex items-center gap-2">
+                      <div className="w-6 h-6 bg-secondary rounded flex items-center justify-center overflow-hidden shrink-0">
+                        {p.image_url ? <img src={p.image_url} alt={p.name} className="w-full h-full object-cover" /> : <ImageIcon size={10} className="text-muted-foreground" />}
+                      </div>
+                      <span className="truncate max-w-[100px]">{p.name}</span>
+                    </td>
+                    <td className="py-2 text-xs text-muted-foreground">{p.sku}</td>
+                    <td className="py-2 text-center font-bold text-red-500">{p.quantity}</td>
+                    <td className="py-2 text-center">{p.min_quantity}</td>
+                    <td className="py-2 text-right text-red-400 font-medium">{p.min_quantity - p.quantity}</td>
+                  </tr>
+                )) : <tr><td colSpan={5} className="py-4 text-center text-muted-foreground">Estoque em dia!</td></tr>}
+              </tbody>
+            </table>
           </div>
         </Card>
       </div>
