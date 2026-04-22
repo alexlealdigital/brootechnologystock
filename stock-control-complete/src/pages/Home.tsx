@@ -3,18 +3,23 @@ import { useLocation } from 'wouter'
 import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, Image as ImageIcon, AlertTriangle } from 'lucide-react'
+import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, Image as ImageIcon, AlertTriangle, Users, Store } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 
 export default function Home() {
   const [, navigate] = useLocation()
-  const { isLoaded, getStats, movements, products, paymentSettings, updatePaymentSettings } = useInventoryContext()
+  const { isLoaded, getStats, movements, products, paymentSettings, updatePaymentSettings, entities, channels, addEntity, deleteEntity, addChannel, deleteChannel } = useInventoryContext()
   const [stats, setStats] = useState<any>({
     totalRevenue: 0, totalFees: 0, totalProfit: 0, inventoryValue: 0, ticketMedio: 0,
     topProductsByProfit: [], lowStockList: []
   })
   const [showSettings, setShowSettings] = useState(false)
+  const [showManageModal, setShowManageModal] = useState<'entities' | 'channels' | null>(null)
   const [fees, setFees] = useState<any>({ credito: 0, debito: 0, pix: 0, boleto: 0 })
+  
+  // States para novos cadastros
+  const [newName, setNewName] = useState('')
+  const [newType, setNewType] = useState('')
 
   useEffect(() => {
     if (isLoaded) {
@@ -32,13 +37,28 @@ export default function Home() {
 
   const formatCurrency = (v: number) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
+  const handleAddManage = async () => {
+    if (!newName) return
+    if (showManageModal === 'entities') {
+      await addEntity({ name: newName, type: newType || 'cliente' })
+    } else {
+      await addChannel({ name: newName, type: 'online' })
+    }
+    setNewName('')
+    setNewType('')
+  }
+
   if (!isLoaded) return <div className="min-h-screen bg-background p-6 flex items-center justify-center">Carregando...</div>
 
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="flex justify-between items-center mb-8">
         <h1 className="text-2xl font-bold">Broo <span className="text-primary">Stock</span> <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded ml-2">PRO</span></h1>
-        <Button onClick={() => setShowSettings(true)} variant="ghost" size="sm"><Settings size={18} className="mr-2" /> Taxas</Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowManageModal('channels')} variant="outline" size="sm" className="border-primary text-primary"><Store size={16} className="mr-2" /> Canais</Button>
+          <Button onClick={() => setShowManageModal('entities')} variant="outline" size="sm" className="border-primary text-primary"><Users size={16} className="mr-2" /> Entidades</Button>
+          <Button onClick={() => setShowSettings(true)} variant="ghost" size="sm"><Settings size={18} className="mr-2" /> Taxas</Button>
+        </div>
       </div>
 
       <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Wallet size={20} className="text-primary" /> Financeiro Executivo</h2>
@@ -50,7 +70,6 @@ export default function Home() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
-        {/* Top 5 Lucrativos com Miniatura */}
         <Card className="p-6">
           <h3 className="text-md font-bold mb-4 flex items-center gap-2 text-green-500"><TrendingUp size={18} /> Top 5 Produtos Mais Lucrativos</h3>
           <div className="space-y-3">
@@ -68,7 +87,6 @@ export default function Home() {
           </div>
         </Card>
 
-        {/* Produtos com Estoque Baixo */}
         <Card className="p-6">
           <h3 className="text-md font-bold mb-4 flex items-center gap-2 text-red-500"><AlertTriangle size={18} /> Produtos com Estoque Baixo</h3>
           <div className="overflow-x-auto">
@@ -108,6 +126,38 @@ export default function Home() {
         <Button onClick={() => navigate('/movements')} className="h-24 text-lg flex flex-col gap-1"><TrendingUp /> Movimentações</Button>
         <Button onClick={() => navigate('/reports')} className="h-24 text-lg flex flex-col gap-1"><BarChart3 /> Relatórios</Button>
       </div>
+
+      {/* Modal de Canais/Entidades */}
+      {showManageModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[110] p-4">
+          <Card className="w-full max-w-md p-6 relative">
+            <button onClick={() => setShowManageModal(null)} className="absolute top-4 right-4"><X size={20} /></button>
+            <h3 className="text-xl font-bold mb-4">Gerenciar {showManageModal === 'entities' ? 'Entidades' : 'Canais'}</h3>
+            <div className="space-y-3 mb-4">
+              <Input value={newName} onChange={e => setNewName(e.target.value)} placeholder="Nome..." />
+              {showManageModal === 'entities' && (
+                <select value={newType} onChange={e => setNewType(e.target.value)} className="w-full p-2 border border-input rounded bg-background text-sm">
+                  <option value="cliente">Cliente</option>
+                  <option value="fornecedor">Fornecedor</option>
+                  <option value="representante">Representante</option>
+                </select>
+              )}
+              <Button onClick={handleAddManage} className="w-full">Adicionar</Button>
+            </div>
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {(showManageModal === 'entities' ? entities : channels).map(item => (
+                <div key={item.id} className="flex justify-between items-center p-2 bg-secondary/30 rounded">
+                  <div className="flex flex-col">
+                    <span className="font-medium">{item.name}</span>
+                    {item.type && <span className="text-[10px] uppercase text-muted-foreground">{item.type}</span>}
+                  </div>
+                  <button onClick={() => showManageModal === 'entities' ? deleteEntity(item.id) : deleteChannel(item.id)} className="text-destructive hover:bg-destructive/10 p-1 rounded"><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
 
       {showSettings && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4">
