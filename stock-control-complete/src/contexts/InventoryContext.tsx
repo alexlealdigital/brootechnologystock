@@ -8,6 +8,7 @@ interface InventoryContextType {
   paymentSettings: any[]
   entities: any[]
   channels: any[]
+  categories: any[]
   isLoaded: boolean
   isLoading: boolean
   error: string | null
@@ -19,7 +20,12 @@ interface InventoryContextType {
   deleteMovement: (id: string) => Promise<void>
   updatePaymentSettings: (settings: any[]) => Promise<void>
   addEntity: (entity: any) => Promise<void>
+  deleteEntity: (id: string) => Promise<void>
   addChannel: (channel: any) => Promise<void>
+  deleteChannel: (id: string) => Promise<void>
+  addCategory: (name: string) => Promise<void>
+  deleteCategory: (id: string) => Promise<void>
+  uploadImage: (file: File) => Promise<string>
   getStats: () => Promise<any>
 }
 
