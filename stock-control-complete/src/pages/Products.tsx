@@ -4,13 +4,14 @@ import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
-import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Tag, Image as ImageIcon, Barcode, Box, Upload, Loader2 } from 'lucide-react'
+import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Tag, Image as ImageIcon, Barcode, Box, Upload, Loader2, Settings } from 'lucide-react'
 import { Footer } from '@/components/ui/Footer'
 
 export default function Products() {
   const [, navigate] = useLocation()
-  const { products, addProduct, updateProduct, deleteProduct, uploadImage, isLoaded } = useInventoryContext()
+  const { products, categories, addProduct, updateProduct, deleteProduct, uploadImage, addCategory, deleteCategory, isLoaded } = useInventoryContext()
   const [showModal, setShowModal] = useState(false)
+  const [showCatModal, setShowCatModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -19,24 +20,17 @@ export default function Products() {
     name: '', sku: '', category: '', quantity: 0, min_quantity: 0, max_quantity: 0,
     cost_price: 0, unit_price: 0, barcode: '', unit: 'un', image_url: '', tags: [] as string[]
   })
+  const [newCatName, setNewCatName] = useState('')
   const [tagInput, setTagInput] = useState('')
 
   const handleOpenModal = (product?: any) => {
     if (product) {
       setEditingId(product.id)
       setFormData({
-        name: product.name || '',
-        sku: product.sku || '',
-        category: product.category || '',
-        quantity: product.quantity || 0,
-        min_quantity: product.min_quantity || 0,
-        max_quantity: product.max_quantity || 0,
-        cost_price: product.cost_price || 0,
-        unit_price: product.unit_price || 0,
-        barcode: product.barcode || '',
-        unit: product.unit || 'un',
-        image_url: product.image_url || '',
-        tags: product.tags || []
+        name: product.name || '', sku: product.sku || '', category: product.category || '',
+        quantity: product.quantity || 0, min_quantity: product.min_quantity || 0, max_quantity: product.max_quantity || 0,
+        cost_price: product.cost_price || 0, unit_price: product.unit_price || 0,
+        barcode: product.barcode || '', unit: product.unit || 'un', image_url: product.image_url || '', tags: product.tags || []
       })
     } else {
       setEditingId(null)
@@ -51,13 +45,12 @@ export default function Products() {
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
-
     try {
       setIsUploading(true)
       const publicUrl = await uploadImage(file)
       setFormData(prev => ({ ...prev, image_url: publicUrl }))
     } catch (err) {
-      alert('Erro ao carregar imagem. Verifique se o bucket "product-images" está configurado no Supabase.')
+      alert('Erro ao carregar imagem.')
     } finally {
       setIsUploading(false)
     }
@@ -68,6 +61,12 @@ export default function Products() {
     if (editingId) await updateProduct(editingId, formData)
     else await addProduct(formData)
     setShowModal(false)
+  }
+
+  const handleAddCategory = async () => {
+    if (!newCatName) return
+    await addCategory(newCatName)
+    setNewCatName('')
   }
 
   const addTag = () => {
@@ -90,7 +89,14 @@ export default function Products() {
               <h1 className="text-2xl font-bold">Broo <span className="text-primary">Stock</span></h1>
             </div>
           </div>
-          <Button onClick={() => handleOpenModal()} className="bg-primary text-white"><Plus size={18} className="mr-2" /> Novo Produto</Button>
+          <div className="flex gap-2">
+            <Button onClick={() => setShowCatModal(true)} variant="outline" className="border-primary text-primary hover:bg-primary/10">
+              <Plus size={18} className="mr-2" /> Nova Categoria
+            </Button>
+            <Button onClick={() => handleOpenModal()} className="bg-primary text-white">
+              <Plus size={18} className="mr-2" /> Novo Produto
+            </Button>
+          </div>
         </div>
       </header>
 
@@ -111,7 +117,6 @@ export default function Products() {
                   </div>
                 </div>
               </div>
-              
               <div className="grid grid-cols-2 gap-4 mt-4 border-t border-border/50 pt-4">
                 <div>
                   <p className="text-[10px] uppercase text-muted-foreground font-bold">Estoque</p>
@@ -124,7 +129,6 @@ export default function Products() {
                   <p className="text-xl font-bold">R$ {p.unit_price.toFixed(2)}</p>
                 </div>
               </div>
-
               <div className="flex justify-end gap-2 mt-4">
                 <button onClick={() => handleOpenModal(p)} className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"><Pen size={16} /></button>
                 <button onClick={() => deleteProduct(p.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors"><Trash2 size={16} /></button>
@@ -134,12 +138,33 @@ export default function Products() {
         </div>
       </main>
 
+      {/* Modal de Categoria */}
+      {showCatModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[110] p-4">
+          <Card className="w-full max-w-md p-6 relative">
+            <button onClick={() => setShowCatModal(false)} className="absolute top-4 right-4"><X size={20} /></button>
+            <h3 className="text-xl font-bold mb-4">Gerenciar Categorias</h3>
+            <div className="flex gap-2 mb-4">
+              <Input value={newCatName} onChange={e => setNewCatName(e.target.value)} placeholder="Nome da categoria..." />
+              <Button onClick={handleAddCategory}>Add</Button>
+            </div>
+            <div className="max-h-60 overflow-y-auto space-y-2">
+              {categories.map(cat => (
+                <div key={cat.id} className="flex justify-between items-center p-2 bg-secondary/30 rounded">
+                  <span>{cat.name}</span>
+                  <button onClick={() => deleteCategory(cat.id)} className="text-destructive hover:bg-destructive/10 p-1 rounded"><Trash2 size={14} /></button>
+                </div>
+              ))}
+            </div>
+          </Card>
+        </div>
+      )}
+
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 overflow-y-auto">
           <Card className="w-full max-w-2xl bg-card p-6 relative my-8">
             <button onClick={() => setShowModal(false)} className="absolute top-4 right-4 hover:bg-secondary p-1 rounded"><X size={20} /></button>
             <h3 className="text-xl font-bold mb-6">{editingId ? 'Editar' : 'Novo'} Produto</h3>
-            
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-4">
@@ -154,7 +179,10 @@ export default function Products() {
                     </div>
                     <div>
                       <label className="block text-sm font-medium mb-1">Categoria</label>
-                      <Input value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} placeholder="Ex: Bebidas" />
+                      <select value={formData.category} onChange={e => setFormData({...formData, category: e.target.value})} className="w-full p-2 border border-input rounded bg-background text-sm">
+                        <option value="">Selecione...</option>
+                        {categories.map(cat => <option key={cat.id} value={cat.name}>{cat.name}</option>)}
+                      </select>
                     </div>
                   </div>
                   <div className="grid grid-cols-2 gap-4">
@@ -178,7 +206,6 @@ export default function Products() {
                     <Input value={formData.image_url} onChange={e => setFormData({...formData, image_url: e.target.value})} placeholder="https://..." />
                   </div>
                 </div>
-
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -204,7 +231,6 @@ export default function Products() {
                       <Input type="number" value={formData.max_quantity} onChange={e => setFormData({...formData, max_quantity: parseInt(e.target.value) || 0})} />
                     </div>
                   </div>
-                  
                   <div className="border-2 border-dashed border-border rounded-lg p-4 flex flex-col items-center justify-center gap-3 bg-secondary/20">
                     {formData.image_url ? (
                       <div className="relative w-24 h-24 rounded overflow-hidden border border-border">
@@ -219,9 +245,7 @@ export default function Products() {
                       {isUploading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Upload size={16} className="mr-2" />}
                       Carregar Imagem (Local)
                     </Button>
-                    <p className="text-[10px] text-muted-foreground">JPG, PNG ou WEBP (Max 5MB)</p>
                   </div>
-
                   <div>
                     <label className="block text-sm font-medium mb-1 flex items-center gap-1"><Tag size={14}/> Tags</label>
                     <div className="flex gap-2">
@@ -238,10 +262,7 @@ export default function Products() {
                   </div>
                 </div>
               </div>
-
-              <Button type="submit" className="w-full bg-primary text-white py-6 text-lg font-bold">
-                {editingId ? 'Atualizar Produto' : 'Criar Produto'}
-              </Button>
+              <Button type="submit" className="w-full bg-primary text-white py-6 text-lg font-bold">{editingId ? 'Atualizar Produto' : 'Criar Produto'}</Button>
             </form>
           </Card>
         </div>
