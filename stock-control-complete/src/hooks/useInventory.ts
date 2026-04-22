@@ -7,6 +7,7 @@ export function useInventory() {
   const [paymentSettings, setPaymentSettings] = useState<PaymentSetting[]>([])
   const [entities, setEntities] = useState<any[]>([])
   const [channels, setChannels] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
   const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -17,12 +18,13 @@ export function useInventory() {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) return
       
-      const [p, m, s, e, c] = await Promise.all([
+      const [p, m, s, e, c, cat] = await Promise.all([
         supabase.from('products').select('*').eq('user_id', user.id).order('name'),
         supabase.from('movements').select('*').eq('user_id', user.id).order('date', { ascending: false }),
         supabase.from('payment_settings').select('*').eq('user_id', user.id),
-        supabase.from('entities').select('*').eq('user_id', user.id),
-        supabase.from('channels').select('*').eq('user_id', user.id)
+        supabase.from('entities').select('*').eq('user_id', user.id).order('name'),
+        supabase.from('channels').select('*').eq('user_id', user.id).order('name'),
+        supabase.from('categories').select('*').eq('user_id', user.id).order('name')
       ])
       
       setProducts(p.data || [])
@@ -30,6 +32,7 @@ export function useInventory() {
       setPaymentSettings(s.data || [])
       setEntities(e.data || [])
       setChannels(c.data || [])
+      setCategories(cat.data || [])
       setIsLoaded(true)
       setError(null)
     } catch (err) {
@@ -41,31 +44,17 @@ export function useInventory() {
 
   useEffect(() => { fetchData() }, [fetchData])
 
-  // --- FUNÇÃO DE UPLOAD DE IMAGEM ---
   const uploadImage = async (file: File) => {
     try {
       const { data: { user } } = await supabase.auth.getUser()
       if (!user) throw new Error('Usuário não autenticado')
-
       const fileExt = file.name.split('.').pop()
       const fileName = `${user.id}/${Math.random()}.${fileExt}`
-      const filePath = `${fileName}`
-
-      const { error: uploadError, data } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, file)
-
+      const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file)
       if (uploadError) throw uploadError
-
-      const { data: { publicUrl } } = supabase.storage
-        .from('product-images')
-        .getPublicUrl(filePath)
-
+      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName)
       return publicUrl
-    } catch (err) {
-      console.error('Erro no upload:', err)
-      throw err
-    }
+    } catch (err) { throw err }
   }
 
   // --- CRUD FUNCTIONS ---
@@ -93,6 +82,50 @@ export function useInventory() {
     await fetchData()
   }
 
+  // --- NOVAS ENTIDADES (CATEGORIAS, CANAIS, ENTIDADES) ---
+  const addCategory = async (name: string) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { error: err } = await supabase.from('categories').insert([{ name, user_id: user.id }])
+    if (err) throw err
+    await fetchData()
+  }
+
+  const deleteCategory = async (id: string) => {
+    const { error: err } = await supabase.from('categories').delete().eq('id', id)
+    if (err) throw err
+    await fetchData()
+  }
+
+  const addEntity = async (entity: any) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { error: err } = await supabase.from('entities').insert([{ ...entity, user_id: user.id }])
+    if (err) throw err
+    await fetchData()
+  }
+
+  const deleteEntity = async (id: string) => {
+    const { error: err } = await supabase.from('entities').delete().eq('id', id)
+    if (err) throw err
+    await fetchData()
+  }
+
+  const addChannel = async (channel: any) => {
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return
+    const { error: err } = await supabase.from('channels').insert([{ ...channel, user_id: user.id }])
+    if (err) throw err
+    await fetchData()
+  }
+
+  const deleteChannel = async (id: string) => {
+    const { error: err } = await supabase.from('channels').delete().eq('id', id)
+    if (err) throw err
+    await fetchData()
+  }
+
+  // --- MOVIMENTAÇÕES ---
   const addMovement = async (movement: any) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -138,7 +171,6 @@ export function useInventory() {
 
   const getStats = useCallback(async () => {
     const salesMovements = movements.filter(m => m.type === 'saida' && m.reason === 'venda')
-    
     const totalRevenue = salesMovements.reduce((sum, m) => sum + (m.quantity * (m.sale_price || 0)), 0)
     const totalFees = salesMovements.reduce((sum, m) => sum + (m.fee_amount || 0), 0)
     const totalProfit = salesMovements.reduce((sum, m) => {
@@ -146,11 +178,8 @@ export function useInventory() {
       const cost = (product?.cost_price || 0) * m.quantity
       return sum + ((m.sale_price || 0) * m.quantity - cost - (m.fee_amount || 0))
     }, 0)
-
     const inventoryValue = products.reduce((sum, p) => sum + (p.quantity * (p.cost_price || 0)), 0)
     const ticketMedio = salesMovements.length > 0 ? totalRevenue / salesMovements.length : 0
-
-    // Agrupamento para Rankings Reais
     const productStats = salesMovements.reduce((acc: any, m) => {
       const pid = m.product_id
       const product = products.find(p => p.id === pid)
@@ -159,33 +188,15 @@ export function useInventory() {
       acc[pid].profit += (m.quantity * (m.sale_price || 0)) - cost - (m.fee_amount || 0)
       return acc
     }, {})
+    const topProductsByProfit = Object.values(productStats).sort((a: any, b: any) => b.profit - a.profit).slice(0, 5)
+    const lowStockProducts = products.filter(p => p.quantity <= p.min_quantity).sort((a, b) => a.quantity - b.quantity)
 
-    const topProductsByProfit = Object.values(productStats)
-      .sort((a: any, b: any) => b.profit - a.profit)
-      .slice(0, 5)
-
-    // Agrupamento de Estoque Baixo por SKU
-    const lowStockProducts = products
-      .filter(p => p.quantity <= p.min_quantity)
-      .sort((a, b) => a.quantity - b.quantity)
-
-    return {
-      totalProducts: products.length,
-      totalQuantity: products.reduce((sum, p) => sum + p.quantity, 0),
-      lowStock: lowStockProducts.length,
-      lowStockList: lowStockProducts,
-      inventoryValue,
-      totalRevenue, 
-      totalFees, 
-      totalProfit,
-      ticketMedio,
-      topProductsByProfit
-    }
+    return { totalProducts: products.length, totalQuantity: products.reduce((sum, p) => sum + p.quantity, 0), lowStock: lowStockProducts.length, lowStockList: lowStockProducts, inventoryValue, totalRevenue, totalFees, totalProfit, ticketMedio, topProductsByProfit }
   }, [products, movements])
 
   return { 
-    products, movements, paymentSettings, entities, channels, isLoaded, isLoading, error,
+    products, movements, paymentSettings, entities, channels, categories, isLoaded, isLoading, error,
     addProduct, updateProduct, deleteProduct, addMovement, updateMovement, deleteMovement,
-    updatePaymentSettings, uploadImage, getStats 
+    updatePaymentSettings, uploadImage, getStats, addCategory, deleteCategory, addEntity, deleteEntity, addChannel, deleteChannel
   }
 }
