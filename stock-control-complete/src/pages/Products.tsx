@@ -4,12 +4,18 @@ import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
-import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Tag, Image as ImageIcon, Barcode, Box, Upload, Loader2, Settings } from 'lucide-react'
+import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Tag, Image as ImageIcon, Barcode, Box, Upload, Loader2, Settings, LogOut } from 'lucide-react'
 import { Footer } from '@/components/ui/Footer'
+import { supabase } from '@/lib/supabase'
 
 export default function Products() {
   const [, navigate] = useLocation()
   const { products, categories, addProduct, updateProduct, deleteProduct, uploadImage, addCategory, deleteCategory, isLoaded } = useInventoryContext()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
   const [showModal, setShowModal] = useState(false)
   const [showCatModal, setShowCatModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -96,6 +102,7 @@ export default function Products() {
             <Button onClick={() => handleOpenModal()} className="bg-primary text-white">
               <Plus size={18} className="mr-2" /> Novo Produto
             </Button>
+            <Button onClick={handleLogout} variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10"><LogOut size={18} className="mr-2" /> Sair</Button>
           </div>
         </div>
       </header>
