@@ -126,6 +126,16 @@ export function useInventory() {
   }
 
   // --- MOVIMENTAÇÕES ---
+  const sanitizeMovement = (movement: any) => ({
+    ...movement,
+    entity_id: movement.entity_id || null,
+    channel_id: movement.channel_id || null,
+    sale_price: movement.sale_price || null,
+    notes: movement.notes || null,
+    sale_channel: movement.sale_channel || null,
+    payment_method: movement.payment_method || null,
+  })
+
   const addMovement = async (movement: any) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
@@ -134,7 +144,8 @@ export function useInventory() {
       const setting = paymentSettings.find(s => s.method_name === movement.payment_method)
       fee_amount = ((movement.sale_price || 0) * movement.quantity * (setting?.fee_percentage || 0)) / 100
     }
-    const { error: err } = await supabase.from('movements').insert([{ ...movement, fee_amount, user_id: user.id, date: movement.date || new Date().toISOString() }])
+    const sanitized = sanitizeMovement(movement)
+    const { error: err } = await supabase.from('movements').insert([{ ...sanitized, fee_amount, user_id: user.id, date: sanitized.date || new Date().toISOString() }])
     if (err) throw err
     await fetchData()
   }
@@ -142,12 +153,13 @@ export function useInventory() {
   const updateMovement = async (id: string, updates: any) => {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return
-    let fee_amount = updates.fee_amount
+    let fee_amount = updates.fee_amount ?? 0
     if (updates.type === 'saida' && updates.payment_method) {
       const setting = paymentSettings.find(s => s.method_name === updates.payment_method)
       fee_amount = ((updates.sale_price || 0) * updates.quantity * (setting?.fee_percentage || 0)) / 100
     }
-    const { error: err } = await supabase.from('movements').update({ ...updates, fee_amount }).eq('id', id).eq('user_id', user.id)
+    const sanitized = sanitizeMovement(updates)
+    const { error: err } = await supabase.from('movements').update({ ...sanitized, fee_amount }).eq('id', id).eq('user_id', user.id)
     if (err) throw err
     await fetchData()
   }
