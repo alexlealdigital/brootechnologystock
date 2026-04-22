@@ -10,31 +10,39 @@ import Movements from '@/pages/Movements'
 import Reports from '@/pages/Reports'
 
 function Router() {
-  const [, navigate] = useLocation()
+  const [location, navigate] = useLocation()
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser()
-      setIsAuthenticated(!!user)
-      if (!user) {
+      const { data: { session } } = await supabase.auth.getSession()
+      const hasUser = !!session?.user
+      setIsAuthenticated(hasUser)
+      
+      if (!hasUser && location !== '/login') {
         navigate('/login')
+      } else if (hasUser && location === '/login') {
+        navigate('/')
       }
     }
 
     checkAuth()
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session?.user)
-      if (!session?.user) {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      const hasUser = !!session?.user
+      setIsAuthenticated(hasUser)
+      
+      if (event === 'SIGNED_OUT' || !hasUser) {
         navigate('/login')
+      } else if (event === 'SIGNED_IN' && location === '/login') {
+        navigate('/')
       }
     })
 
     return () => {
       subscription?.unsubscribe()
     }
-  }, [navigate])
+  }, [navigate, location])
 
   if (isAuthenticated === null) {
     return (
@@ -47,13 +55,18 @@ function Router() {
   return (
     <Switch>
       <Route path="/login" component={Login} />
-      {isAuthenticated && (
+      {isAuthenticated ? (
         <>
           <Route path="/" component={Home} />
           <Route path="/products" component={Products} />
           <Route path="/movements" component={Movements} />
           <Route path="/reports" component={Reports} />
         </>
+      ) : (
+        <Route path="*" component={() => {
+          useEffect(() => { navigate('/login') }, [])
+          return null
+        }} />
       )}
       <Route path="*" component={() => <div className="p-6">Página não encontrada</div>} />
     </Switch>
