@@ -37,7 +37,7 @@ export default function Login() {
           password: formData.password,
         })
         if (error) throw error
-        navigate('/')
+        // A navegação será tratada pelo onAuthStateChange no App.tsx
       } else {
         if (formData.password !== formData.confirmPassword) {
           toast.error('As senhas não coincidem')
