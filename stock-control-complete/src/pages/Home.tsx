@@ -3,8 +3,9 @@ import { useLocation } from 'wouter'
 import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, Image as ImageIcon, AlertTriangle, Users, Store, Trash2 } from 'lucide-react'
+import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, Image as ImageIcon, AlertTriangle, Users, Store, Trash2, LogOut } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
+import { supabase } from '@/lib/supabase'
 
 export default function Home() {
   const [, navigate] = useLocation()
@@ -14,6 +15,11 @@ export default function Home() {
     topProductsByProfit: [], lowStockList: []
   })
   const [showSettings, setShowSettings] = useState(false)
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
   const [showManageModal, setShowManageModal] = useState<'entities' | 'channels' | null>(null)
   const [fees, setFees] = useState<any>({ credito: 0, debito: 0, pix: 0, boleto: 0 })
   
@@ -58,6 +64,7 @@ export default function Home() {
           <Button onClick={() => setShowManageModal('channels')} variant="outline" size="sm" className="border-primary text-primary"><Store size={16} className="mr-2" /> Canais</Button>
           <Button onClick={() => setShowManageModal('entities')} variant="outline" size="sm" className="border-primary text-primary"><Users size={16} className="mr-2" /> Entidades</Button>
           <Button onClick={() => setShowSettings(true)} variant="ghost" size="sm"><Settings size={18} className="mr-2" /> Taxas</Button>
+          <Button onClick={handleLogout} variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10"><LogOut size={18} className="mr-2" /> Sair</Button>
         </div>
       </div>
 
