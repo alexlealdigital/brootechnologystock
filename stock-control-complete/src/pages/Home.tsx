@@ -3,7 +3,7 @@ import { useLocation } from 'wouter'
 import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, Image as ImageIcon, AlertTriangle, Users, Store } from 'lucide-react'
+import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, Image as ImageIcon, AlertTriangle, Users, Store, Trash2 } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 
 export default function Home() {
