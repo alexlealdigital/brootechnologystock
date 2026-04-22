@@ -4,12 +4,18 @@ import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
-import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Users, ShoppingBag, Image as ImageIcon } from 'lucide-react'
+import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Users, ShoppingBag, Image as ImageIcon, LogOut } from 'lucide-react'
 import { Footer } from '@/components/ui/Footer'
+import { supabase } from '@/lib/supabase'
 
 export default function Movements() {
   const [, navigate] = useLocation()
   const { products, movements, entities, channels, addMovement, updateMovement, deleteMovement, isLoaded } = useInventoryContext()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
@@ -78,7 +84,10 @@ export default function Movements() {
               <h1 className="text-2xl font-bold">Broo <span className="text-primary">Stock</span></h1>
             </div>
           </div>
-          <Button onClick={() => handleOpenModal()} className="bg-primary text-white"><Plus size={18} className="mr-2" /> Nova Movimentação</Button>
+          <div className="flex gap-2">
+            <Button onClick={() => handleOpenModal()} className="bg-primary text-white"><Plus size={18} className="mr-2" /> Nova Movimentação</Button>
+            <Button onClick={handleLogout} variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10"><LogOut size={18} className="mr-2" /> Sair</Button>
+          </div>
         </div>
       </header>
 
