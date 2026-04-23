@@ -11,20 +11,19 @@ export function useInventory() {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
-  const fetchData = useCallback(async () => {
+  const fetchData = useCallback(async (userId: string) => {
     try {
       setIsLoading(true)
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) return
       
       const [p, m, s, e, c, cat] = await Promise.all([
-        supabase.from('products').select('*').eq('user_id', user.id).order('name'),
-        supabase.from('movements').select('*').eq('user_id', user.id).order('date', { ascending: false }),
-        supabase.from('payment_settings').select('*').eq('user_id', user.id),
-        supabase.from('entities').select('*').eq('user_id', user.id).order('name'),
-        supabase.from('channels').select('*').eq('user_id', user.id).order('name'),
-        supabase.from('categories').select('*').eq('user_id', user.id).order('name')
+        supabase.from('products').select('*').eq('user_id', userId).order('name'),
+        supabase.from('movements').select('*').eq('user_id', userId).order('date', { ascending: false }),
+        supabase.from('payment_settings').select('*').eq('user_id', userId),
+        supabase.from('entities').select('*').eq('user_id', userId).order('name'),
+        supabase.from('channels').select('*').eq('user_id', userId).order('name'),
+        supabase.from('categories').select('*').eq('user_id', userId).order('name')
       ])
       
       setProducts(p.data || [])
@@ -42,14 +41,44 @@ export function useInventory() {
     }
   }, [])
 
-  useEffect(() => { fetchData() }, [fetchData])
+  // 1. Ouvir mudanças de autenticação para disparar o carregamento
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      const userId = session?.user?.id || null
+      setCurrentUserId(userId)
+      
+      if (userId) {
+        fetchData(userId)
+      } else {
+        // Resetar dados ao sair
+        setProducts([])
+        setMovements([])
+        setPaymentSettings([])
+        setEntities([])
+        setChannels([])
+        setCategories([])
+        setIsLoaded(false)
+      }
+    })
+
+    // Verificar sessão inicial
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user?.id) {
+        setCurrentUserId(session.user.id)
+        fetchData(session.user.id)
+      }
+    })
+
+    return () => {
+      subscription?.unsubscribe()
+    }
+  }, [fetchData])
 
   const uploadImage = async (file: File) => {
     try {
-      const { data: { user } } = await supabase.auth.getUser()
-      if (!user) throw new Error('Usuário não autenticado')
+      if (!currentUserId) throw new Error('Usuário não autenticado')
       const fileExt = file.name.split('.').pop()
-      const fileName = `${user.id}/${Math.random()}.${fileExt}`
+      const fileName = `${currentUserId}/${Math.random()}.${fileExt}`
       const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file)
       if (uploadError) throw uploadError
       const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName)
@@ -59,73 +88,65 @@ export function useInventory() {
 
   // --- CRUD FUNCTIONS ---
   const addProduct = async (product: any) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { error: err } = await supabase.from('products').insert([{ ...product, user_id: user.id }])
+    if (!currentUserId) return
+    const { error: err } = await supabase.from('products').insert([{ ...product, user_id: currentUserId }])
     if (err) throw err
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
   const updateProduct = async (id: string, updates: any) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { error: err } = await supabase.from("products").update(updates).eq("id", id).eq("user_id", user.id)
+    if (!currentUserId) return
+    const { error: err } = await supabase.from("products").update(updates).eq("id", id).eq("user_id", currentUserId)
     if (err) throw err
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
   const deleteProduct = async (id: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { error: err } = await supabase.from("products").delete().eq("id", id).eq("user_id", user.id)
+    if (!currentUserId) return
+    const { error: err } = await supabase.from("products").delete().eq("id", id).eq("user_id", currentUserId)
     if (err) throw err
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
-  // --- NOVAS ENTIDADES (CATEGORIAS, CANAIS, ENTIDADES) ---
   const addCategory = async (name: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { error: err } = await supabase.from('categories').insert([{ name, user_id: user.id }])
+    if (!currentUserId) return
+    const { error: err } = await supabase.from('categories').insert([{ name, user_id: currentUserId }])
     if (err) throw err
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
   const deleteCategory = async (id: string) => {
     const { error: err } = await supabase.from('categories').delete().eq('id', id)
     if (err) throw err
-    await fetchData()
+    if (currentUserId) await fetchData(currentUserId)
   }
 
   const addEntity = async (entity: any) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { error: err } = await supabase.from('entities').insert([{ ...entity, user_id: user.id }])
+    if (!currentUserId) return
+    const { error: err } = await supabase.from('entities').insert([{ ...entity, user_id: currentUserId }])
     if (err) throw err
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
   const deleteEntity = async (id: string) => {
     const { error: err } = await supabase.from('entities').delete().eq('id', id)
     if (err) throw err
-    await fetchData()
+    if (currentUserId) await fetchData(currentUserId)
   }
 
   const addChannel = async (channel: any) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { error: err } = await supabase.from('channels').insert([{ ...channel, user_id: user.id }])
+    if (!currentUserId) return
+    const { error: err } = await supabase.from('channels').insert([{ ...channel, user_id: currentUserId }])
     if (err) throw err
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
   const deleteChannel = async (id: string) => {
     const { error: err } = await supabase.from('channels').delete().eq('id', id)
     if (err) throw err
-    await fetchData()
+    if (currentUserId) await fetchData(currentUserId)
   }
 
-  // --- MOVIMENTAÇÕES ---
   const sanitizeMovement = (movement: any) => ({
     ...movement,
     entity_id: movement.entity_id || null,
@@ -137,48 +158,44 @@ export function useInventory() {
   })
 
   const addMovement = async (movement: any) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!currentUserId) return
     let fee_amount = 0
     if (movement.type === 'saida' && movement.payment_method) {
       const setting = paymentSettings.find(s => s.method_name === movement.payment_method)
       fee_amount = ((movement.sale_price || 0) * movement.quantity * (setting?.fee_percentage || 0)) / 100
     }
     const sanitized = sanitizeMovement(movement)
-    const { error: err } = await supabase.from('movements').insert([{ ...sanitized, fee_amount, user_id: user.id, date: sanitized.date || new Date().toISOString() }])
+    const { error: err } = await supabase.from('movements').insert([{ ...sanitized, fee_amount, user_id: currentUserId, date: sanitized.date || new Date().toISOString() }])
     if (err) throw err
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
   const updateMovement = async (id: string, updates: any) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!currentUserId) return
     let fee_amount = updates.fee_amount ?? 0
     if (updates.type === 'saida' && updates.payment_method) {
       const setting = paymentSettings.find(s => s.method_name === updates.payment_method)
       fee_amount = ((updates.sale_price || 0) * updates.quantity * (setting?.fee_percentage || 0)) / 100
     }
     const sanitized = sanitizeMovement(updates)
-    const { error: err } = await supabase.from('movements').update({ ...sanitized, fee_amount }).eq('id', id).eq('user_id', user.id)
+    const { error: err } = await supabase.from('movements').update({ ...sanitized, fee_amount }).eq('id', id).eq('user_id', currentUserId)
     if (err) throw err
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
   const deleteMovement = async (id: string) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
-    const { error: err } = await supabase.from("movements").delete().eq("id", id).eq("user_id", user.id)
+    if (!currentUserId) return
+    const { error: err } = await supabase.from("movements").delete().eq("id", id).eq("user_id", currentUserId)
     if (err) throw err
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
   const updatePaymentSettings = async (settings: any[]) => {
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return
+    if (!currentUserId) return
     for (const s of settings) {
-      await supabase.from('payment_settings').upsert({ user_id: user.id, ...s }, { onConflict: 'user_id,method_name' })
+      await supabase.from('payment_settings').upsert({ user_id: currentUserId, ...s }, { onConflict: 'user_id,method_name' })
     }
-    await fetchData()
+    await fetchData(currentUserId)
   }
 
   const getStats = useCallback(async () => {
