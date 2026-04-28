@@ -26,7 +26,9 @@ export default function Login() {
     try {
       if (isForgotPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-          redirectTo: `${window.location.origin}/login`,
+          // IMPORTANTE: aponta para a rota /reset-password do app modular
+          // O Supabase vai redirecionar o usuário para esta URL com o token no hash (#)
+          redirectTo: `${window.location.origin}/reset-password`,
         })
         if (error) throw error
         toast.success('Link de recuperação enviado para seu e-mail!')
@@ -86,10 +88,10 @@ export default function Login() {
               {isForgotPassword ? 'Recuperar Senha' : isLogin ? 'Bem-vindo de volta' : 'Criar nova conta'}
             </CardTitle>
             <CardDescription className="text-center">
-              {isForgotPassword 
-                ? 'Enviaremos um link de alteração para seu e-mail' 
-                : isLogin 
-                  ? 'Entre com suas credenciais para acessar o painel' 
+              {isForgotPassword
+                ? 'Enviaremos um link de alteração para seu e-mail'
+                : isLogin
+                  ? 'Entre com suas credenciais para acessar o painel'
                   : 'Preencha os dados abaixo para se cadastrar'}
             </CardDescription>
           </CardHeader>
@@ -134,7 +136,7 @@ export default function Login() {
                       <Lock size={14} /> Senha
                     </label>
                     {isLogin && (
-                      <button 
+                      <button
                         type="button"
                         onClick={() => setIsForgotPassword(true)}
                         className="text-xs text-primary hover:underline"
@@ -146,7 +148,7 @@ export default function Login() {
                   <Input
                     type="password"
                     placeholder="••••••••"
-                    autoComplete={isLogin ? "current-password" : "new-password"}
+                    autoComplete={isLogin ? 'current-password' : 'new-password'}
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     required
@@ -172,8 +174,8 @@ export default function Login() {
                 </div>
               )}
 
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 font-semibold"
                 disabled={loading}
               >
@@ -197,13 +199,13 @@ export default function Login() {
                 }}
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
               >
-                {isForgotPassword 
-                  ? 'Voltar para o Login' 
+                {isForgotPassword
+                  ? 'Voltar para o Login'
                   : isLogin ? 'Não tem uma conta? Cadastre-se' : 'Já tem uma conta? Entre agora'}
               </button>
               {isForgotPassword && (
                 <div>
-                   <button
+                  <button
                     type="button"
                     onClick={() => setIsForgotPassword(false)}
                     className="text-sm text-primary hover:underline"
@@ -215,7 +217,7 @@ export default function Login() {
             </div>
           </CardContent>
         </Card>
-        
+
         <p className="text-center text-xs text-muted-foreground mt-8">
           Broo Technology — Todos os Direitos Reservados 2026
         </p>
