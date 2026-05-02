@@ -59,22 +59,28 @@ export default function Login() {
         setFormData({ email: '', password: '', confirmPassword: '', fullName: '' })
       }
     } catch (error: any) {
-      // Tratamento de erros amigável e traduzido
-      console.error('Auth Error:', error)
+      console.error('Auth Error Details:', error)
       
-      if (error.status === 429) {
+      // Extrai a mensagem de erro de várias formas possíveis
+      const errorMessage = error.error_description || error.message || '';
+      const status = error.status || (error.status === 0 ? 0 : null);
+
+      if (status === 429) {
         toast.error('Muitas tentativas. Por favor, aguarde um momento.')
-      } else if (error.message === 'Invalid login credentials' || error.status === 400) {
-        // O Supabase retorna 400 para credenciais inválidas no login
+      } else if (
+        errorMessage.includes('Invalid login credentials') || 
+        errorMessage.includes('invalid_credentials') ||
+        status === 400
+      ) {
         if (isLogin) {
           toast.error('E-mail ou senha incorretos')
         } else {
-          toast.error(error.message || 'Erro ao processar solicitação')
+          toast.error('Erro ao processar cadastro. Verifique os dados.')
         }
-      } else if (error.message === 'Email not confirmed') {
+      } else if (errorMessage.includes('Email not confirmed')) {
         toast.error('Por favor, confirme seu e-mail antes de entrar')
       } else {
-        toast.error(error.message || 'Ocorreu um erro inesperado')
+        toast.error(errorMessage || 'Ocorreu um erro inesperado')
       }
     } finally {
       setLoading(false)
