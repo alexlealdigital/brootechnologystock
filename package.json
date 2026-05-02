@@ -53,7 +53,7 @@
     "tailwindcss": "^3.4.3",
     "typescript": "^5.2.2",
     "vite": "^5.2.0",
-    "vite-plugin-pwa": "^0.21.1"  <-- ADICIONE ESTA LINHA AQUI
+    "vite-plugin-pwa": "^0.21.1" 
   }
 
   "engines": {
