@@ -28,8 +28,6 @@ export default function Login() {
     try {
       if (isForgotPassword) {
         const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
-          // IMPORTANTE: aponta para a rota /reset-password do app modular
-          // O Supabase vai redirecionar o usuário para esta URL com o token no hash (#)
           redirectTo: `${window.location.origin}/reset-password`,
         })
         if (error) throw error
@@ -41,7 +39,6 @@ export default function Login() {
           password: formData.password,
         })
         if (error) throw error
-        // A navegação será tratada pelo onAuthStateChange no App.tsx
       } else {
         if (formData.password !== formData.confirmPassword) {
           toast.error('As senhas não coincidem')
@@ -57,23 +54,36 @@ export default function Login() {
         })
         if (error) throw error
         
-        // Exibir tela de confirmação de e-mail
         setSignUpEmail(formData.email)
         setIsSignUpConfirmation(true)
         setFormData({ email: '', password: '', confirmPassword: '', fullName: '' })
       }
     } catch (error: any) {
-      toast.error(error.message || 'Ocorreu um erro inesperado')
+      // Tratamento de erros amigável e traduzido
+      console.error('Auth Error:', error)
+      
+      if (error.status === 429) {
+        toast.error('Muitas tentativas. Por favor, aguarde um momento.')
+      } else if (error.message === 'Invalid login credentials' || error.status === 400) {
+        // O Supabase retorna 400 para credenciais inválidas no login
+        if (isLogin) {
+          toast.error('E-mail ou senha incorretos')
+        } else {
+          toast.error(error.message || 'Erro ao processar solicitação')
+        }
+      } else if (error.message === 'Email not confirmed') {
+        toast.error('Por favor, confirme seu e-mail antes de entrar')
+      } else {
+        toast.error(error.message || 'Ocorreu um erro inesperado')
+      }
     } finally {
       setLoading(false)
     }
   }
 
-  // Tela de confirmação de e-mail após cadastro
   if (isSignUpConfirmation) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
-        {/* Background Decorativo */}
         <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
           <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
           <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
@@ -146,7 +156,6 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
-      {/* Background Decorativo */}
       <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
         <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
         <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
