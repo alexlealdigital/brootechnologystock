@@ -59,28 +59,23 @@ export default function Login() {
         setFormData({ email: '', password: '', confirmPassword: '', fullName: '' })
       }
     } catch (error: any) {
-      console.error('Auth Error Details:', error)
+      console.error('Auth Error:', error)
       
-      // Extrai a mensagem de erro de várias formas possíveis
-      const errorMessage = error.error_description || error.message || '';
-      const status = error.status || (error.status === 0 ? 0 : null);
-
-      if (status === 429) {
-        toast.error('Muitas tentativas. Por favor, aguarde um momento.')
-      } else if (
-        errorMessage.includes('Invalid login credentials') || 
-        errorMessage.includes('invalid_credentials') ||
-        status === 400
-      ) {
-        if (isLogin) {
-          toast.error('E-mail ou senha incorretos')
+      // Lógica simplificada e infalível para o Login
+      if (isLogin && !isForgotPassword) {
+        const errorStr = String(error?.message || '').toLowerCase();
+        
+        if (errorStr.includes('email not confirmed')) {
+          toast.error('Por favor, confirme seu e-mail antes de entrar')
+        } else if (error?.status === 429) {
+          toast.error('Muitas tentativas. Tente novamente mais tarde.')
         } else {
-          toast.error('Erro ao processar cadastro. Verifique os dados.')
+          // Para qualquer outro erro no login (400, Invalid Credentials, etc)
+          toast.error('E-mail ou senha incorretos')
         }
-      } else if (errorMessage.includes('Email not confirmed')) {
-        toast.error('Por favor, confirme seu e-mail antes de entrar')
       } else {
-        toast.error(errorMessage || 'Ocorreu um erro inesperado')
+        // Para erros no Cadastro ou Esqueci Senha
+        toast.error(error?.message || 'Ocorreu um erro inesperado')
       }
     } finally {
       setLoading(false)
