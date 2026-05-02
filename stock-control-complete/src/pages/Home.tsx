@@ -6,6 +6,7 @@ import { Card } from '@/components/ui/Card'
 import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, Image as ImageIcon, AlertTriangle, Users, Store, Trash2, LogOut } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { supabase } from '@/lib/supabase'
+import { InstallPWA } from '@/components/InstallPWA' // Importação do componente PWA
 
 export default function Home() {
   const [, navigate] = useLocation()
@@ -59,7 +60,12 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-background p-6">
       <div className="flex justify-between items-center mb-8">
-        <h1 className="text-2xl font-bold">Broo <span className="text-primary">Stock</span> <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded ml-2">PRO</span></h1>
+        <div className="flex flex-col">
+          <h1 className="text-2xl font-bold">Broo <span className="text-primary">Stock</span> <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded ml-2">PRO</span></h1>
+          <div className="mt-2">
+            <InstallPWA /> {/* Botão de instalação aparecerá aqui quando disponível */}
+          </div>
+        </div>
         <div className="flex gap-2">
           <Button onClick={() => setShowManageModal('channels')} variant="outline" size="sm" className="border-primary text-primary"><Store size={16} className="mr-2" /> Canais</Button>
           <Button onClick={() => setShowManageModal('entities')} variant="outline" size="sm" className="border-primary text-primary"><Users size={16} className="mr-2" /> Entidades</Button>
