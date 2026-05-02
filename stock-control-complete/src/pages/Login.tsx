@@ -4,13 +4,15 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
-import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2 } from 'lucide-react'
+import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function Login() {
   const [, navigate] = useLocation()
   const [isLogin, setIsLogin] = useState(true)
   const [isForgotPassword, setIsForgotPassword] = useState(false)
+  const [isSignUpConfirmation, setIsSignUpConfirmation] = useState(false)
+  const [signUpEmail, setSignUpEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
@@ -54,13 +56,92 @@ export default function Login() {
           }
         })
         if (error) throw error
-        toast.success('Conta criada! Verifique seu e-mail para confirmar.')
+        
+        // Exibir tela de confirmação de e-mail
+        setSignUpEmail(formData.email)
+        setIsSignUpConfirmation(true)
+        setFormData({ email: '', password: '', confirmPassword: '', fullName: '' })
       }
     } catch (error: any) {
       toast.error(error.message || 'Ocorreu um erro inesperado')
     } finally {
       setLoading(false)
     }
+  }
+
+  // Tela de confirmação de e-mail após cadastro
+  if (isSignUpConfirmation) {
+    return (
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        {/* Background Decorativo */}
+        <div className="absolute top-0 left-0 w-full h-full overflow-hidden -z-10">
+          <div className="absolute -top-24 -left-24 w-96 h-96 bg-primary/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-24 -right-24 w-96 h-96 bg-primary/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="w-full max-w-md">
+          <div className="flex flex-col items-center mb-8">
+            <div className="bg-green-500/20 p-4 rounded-2xl mb-4 animate-pulse">
+              <CheckCircle2 className="text-green-500 h-12 w-12" />
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground text-center" style={{ fontFamily: 'Poppins' }}>
+              Verifique seu <span className="text-primary">E-mail</span>
+            </h1>
+          </div>
+
+          <Card className="border-border/50 bg-card/50 backdrop-blur-xl shadow-2xl">
+            <CardHeader className="space-y-1">
+              <CardTitle className="text-2xl text-center">Confirmação de Cadastro</CardTitle>
+              <CardDescription className="text-center">
+                Enviamos um link de confirmação para:
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="bg-background/50 border border-border/50 rounded-lg p-4 text-center">
+                <p className="font-semibold text-foreground break-all">{signUpEmail}</p>
+              </div>
+
+              <div className="space-y-3 text-sm text-muted-foreground">
+                <p className="flex items-start gap-3">
+                  <span className="text-primary font-bold mt-1">1.</span>
+                  <span>Verifique sua caixa de entrada e procure pelo e-mail de confirmação</span>
+                </p>
+                <p className="flex items-start gap-3">
+                  <span className="text-primary font-bold mt-1">2.</span>
+                  <span>Clique no link de confirmação para ativar sua conta</span>
+                </p>
+                <p className="flex items-start gap-3">
+                  <span className="text-primary font-bold mt-1">3.</span>
+                  <span>Após confirmar, você poderá fazer login normalmente</span>
+                </p>
+              </div>
+
+              <div className="bg-amber-500/10 border border-amber-500/20 rounded-lg p-3">
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  <strong>Dica:</strong> Se não receber o e-mail em alguns minutos, verifique sua pasta de spam.
+                </p>
+              </div>
+
+              <Button
+                onClick={() => {
+                  setIsSignUpConfirmation(false)
+                  setIsLogin(true)
+                  setFormData({ email: '', password: '', confirmPassword: '', fullName: '' })
+                }}
+                className="w-full bg-primary hover:bg-primary/90 text-primary-foreground h-11 font-semibold"
+              >
+                <ArrowRight className="mr-2 h-4 w-4" />
+                Voltar para o Login
+              </Button>
+            </CardContent>
+          </Card>
+
+          <p className="text-center text-xs text-muted-foreground mt-8">
+            Broo Technology — Todos os Direitos Reservados 2026
+          </p>
+        </div>
+      </div>
+    )
   }
 
   return (
