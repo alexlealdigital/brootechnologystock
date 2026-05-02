@@ -3,6 +3,7 @@ import { Route, Switch, useLocation } from 'wouter'
 import { supabase } from '@/lib/supabase'
 import { InventoryProvider } from '@/contexts/InventoryContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import { Toaster } from 'sonner' // Importação necessária
 import Login from '@/pages/Login'
 import ResetPassword from '@/pages/ResetPassword'
 import Home from '@/pages/Home'
@@ -108,6 +109,8 @@ function App() {
     <ThemeProvider>
       <InventoryProvider>
         <Router />
+        {/* O Toaster deve ficar aqui, fora do Router, para funcionar em todas as telas */}
+        <Toaster position="top-right" richColors closeButton />
       </InventoryProvider>
     </ThemeProvider>
   )
