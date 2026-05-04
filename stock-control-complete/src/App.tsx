@@ -3,7 +3,8 @@ import { Route, Switch, useLocation } from 'wouter'
 import { supabase } from '@/lib/supabase'
 import { InventoryProvider } from '@/contexts/InventoryContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
-import { Toaster } from 'sonner' // Importação necessária
+import { Toaster } from 'sonner'
+
 import Login from '@/pages/Login'
 import ResetPassword from '@/pages/ResetPassword'
 import Home from '@/pages/Home'
@@ -11,7 +12,6 @@ import Products from '@/pages/Products'
 import Movements from '@/pages/Movements'
 import Reports from '@/pages/Reports'
 import StoreCatalog from '@/pages/StoreCatalog'
-
 
 // Rotas públicas — acessíveis sem autenticação
 const PUBLIC_ROUTES = ['/login', '/reset-password', '/loja']
@@ -21,7 +21,6 @@ function Router() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
 
   useEffect(() => {
-    // 1. Verificar sessão inicial
     const checkAuth = async () => {
       const { data: { session } } = await supabase.auth.getSession()
       const hasUser = !!session?.user
@@ -37,28 +36,10 @@ function Router() {
     }
 
     checkAuth()
-  }, [location, navigate])
 
-  return (
-    <Switch>
-      <Route path="/" component={Home} />
-      <Route path="/login" component={Login} />
-      <Route path="/reset-password" component={ResetPassword} />
-      <Route path="/products" component={Products} />
-      <Route path="/movements" component={Movements} />
-      <Route path="/reports" component={Reports} />
-      <Route path="/loja" component={StoreCatalog} />  {/* ← ADICIONE AQUI */}
-    </Switch>
-  )
-}
-
-
-    checkAuth()
-
-    // 2. Ouvir mudanças de estado (Login/Logout/Recovery)
+    // Ouvir mudanças de estado (Login/Logout/Recovery)
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       const hasUser = !!session?.user
-
       setIsAuthenticated(hasUser)
 
       if (event === 'PASSWORD_RECOVERY') {
@@ -79,7 +60,7 @@ function Router() {
     return () => {
       subscription?.unsubscribe()
     }
-  }, [navigate, location])
+  }, [location, navigate])
 
   // Tela de transição enquanto verifica a sessão inicial
   if (isAuthenticated === null && !PUBLIC_ROUTES.includes(location)) {
@@ -98,6 +79,7 @@ function Router() {
       {/* Rotas públicas */}
       <Route path="/login" component={Login} />
       <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/loja" component={StoreCatalog} />
 
       {/* Rotas protegidas */}
       {isAuthenticated ? (
@@ -111,12 +93,18 @@ function Router() {
         <Route
           path="*"
           component={() => {
-            useEffect(() => { navigate('/login') }, [])
+            // Redireciona para o login se não estiver autenticado e a rota não for pública
+            useEffect(() => {
+              if (!PUBLIC_ROUTES.includes(location)) {
+                navigate('/login')
+              }
+            }, [location, navigate])
             return null
           }}
         />
       )}
 
+      {/* Rota 404 para rotas não encontradas e não públicas */}
       <Route path="*" component={() => <div className="p-6">Página não encontrada</div>} />
     </Switch>
   )
