@@ -10,9 +10,11 @@ import Home from '@/pages/Home'
 import Products from '@/pages/Products'
 import Movements from '@/pages/Movements'
 import Reports from '@/pages/Reports'
+import StoreCatalog from '@/pages/StoreCatalog'
+
 
 // Rotas públicas — acessíveis sem autenticação
-const PUBLIC_ROUTES = ['/login', '/reset-password']
+const PUBLIC_ROUTES = ['/login', '/reset-password', '/loja']
 
 function Router() {
   const [location, navigate] = useLocation()
@@ -32,8 +34,24 @@ function Router() {
       } else if (hasUser && location === '/login') {
         navigate('/')
       }
-      // Se estiver em /reset-password, não redireciona — o componente cuida disso
     }
+
+    checkAuth()
+  }, [location, navigate])
+
+  return (
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route path="/login" component={Login} />
+      <Route path="/reset-password" component={ResetPassword} />
+      <Route path="/products" component={Products} />
+      <Route path="/movements" component={Movements} />
+      <Route path="/reports" component={Reports} />
+      <Route path="/loja" component={StoreCatalog} />  {/* ← ADICIONE AQUI */}
+    </Switch>
+  )
+}
+
 
     checkAuth()
 
