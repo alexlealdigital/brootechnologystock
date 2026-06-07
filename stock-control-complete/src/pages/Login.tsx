@@ -4,8 +4,10 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
-import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2, CheckCircle2 } from 'lucide-react'
+import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2, CheckCircle2, Check, Sparkles, KeyRound } from 'lucide-react'
 import { toast } from 'sonner'
+import LicenseCheckoutModal from '@/components/LicenseCheckoutModal'
+import { BROOSTOCK_LICENSE_PRICE_LABEL } from '@/lib/broostore'
 
 export default function Login() {
   const [, navigate] = useLocation()
@@ -13,6 +15,7 @@ export default function Login() {
   const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [isSignUpConfirmation, setIsSignUpConfirmation] = useState(false)
   const [signUpEmail, setSignUpEmail] = useState('')
+  const [showCheckout, setShowCheckout] = useState(false)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
@@ -309,10 +312,88 @@ export default function Login() {
           </CardContent>
         </Card>
 
+        {/* Planos / Compra de chave — visível apenas na tela de cadastro */}
+        {!isLogin && !isForgotPassword && (
+          <div className="mt-6 space-y-3">
+            <div className="flex items-center gap-3">
+              <div className="h-px flex-1 bg-border/50" />
+              <span className="text-xs uppercase tracking-wider text-muted-foreground">
+                Escolha seu plano
+              </span>
+              <div className="h-px flex-1 bg-border/50" />
+            </div>
+
+            {/* Plano Gratuito */}
+            <div className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-xl p-4">
+              <div className="flex items-baseline justify-between">
+                <h3 className="font-semibold text-foreground">Gratuito</h3>
+                <span className="text-sm text-muted-foreground">R$ 0</span>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">
+                A conta que você está criando agora.
+              </p>
+              <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-primary" /> Cadastro e acesso ao painel
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-primary" /> Controle básico de estoque
+                </li>
+              </ul>
+            </div>
+
+            {/* Plano Profissional */}
+            <div className="rounded-xl border border-primary/40 bg-primary/5 backdrop-blur-xl p-4 relative overflow-hidden">
+              <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wide bg-primary/20 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Sparkles size={11} /> Recomendado
+              </span>
+              <div className="flex items-baseline gap-2">
+                <h3 className="font-semibold text-foreground">Profissional</h3>
+              </div>
+              <p className="mt-1">
+                <span className="text-2xl font-bold text-primary">
+                  R$ {BROOSTOCK_LICENSE_PRICE_LABEL}
+                </span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Chave de uso completa da ferramenta.
+              </p>
+              <ul className="mt-3 space-y-1.5 text-sm text-foreground/80">
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-primary" /> Tudo do plano gratuito
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-primary" /> Recursos completos do BrooStock
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-primary" /> Chave enviada por e-mail na hora
+                </li>
+              </ul>
+              <Button
+                type="button"
+                onClick={() => setShowCheckout(true)}
+                className="w-full mt-4 h-11 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <KeyRound className="h-4 w-4" /> Comprar chave
+              </Button>
+              <p className="text-[11px] text-center text-muted-foreground mt-2">
+                Você pode comprar antes ou depois de criar a conta.
+              </p>
+            </div>
+          </div>
+        )}
+
         <p className="text-center text-xs text-muted-foreground mt-8">
           Broo Technology — Todos os Direitos Reservados 2026
         </p>
       </div>
+
+      <LicenseCheckoutModal
+        open={showCheckout}
+        onClose={() => setShowCheckout(false)}
+        defaultName={formData.fullName}
+        defaultEmail={formData.email}
+      />
     </div>
   )
 }
