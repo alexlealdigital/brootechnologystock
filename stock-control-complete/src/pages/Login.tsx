@@ -4,10 +4,16 @@ import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
-import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2, CheckCircle2, Check, Sparkles, KeyRound } from 'lucide-react'
+import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2, CheckCircle2, Check, Sparkles } from 'lucide-react'
 import { toast } from 'sonner'
-import LicenseCheckoutModal from '@/components/LicenseCheckoutModal'
-import { BROOSTOCK_LICENSE_PRICE_LABEL } from '@/lib/broostore'
+import {
+  buildCheckoutUrl,
+  BROOSTOCK_PLANO_MENSAL_ID,
+  BROOSTOCK_PLANO_ANUAL_ID,
+  PLANO_MENSAL_PRECO_LABEL,
+  PLANO_ANUAL_TOTAL_LABEL,
+  PLANO_ANUAL_MENSAL_LABEL,
+} from '@/lib/broostore'
 
 export default function Login() {
   const [, navigate] = useLocation()
@@ -15,7 +21,6 @@ export default function Login() {
   const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [isSignUpConfirmation, setIsSignUpConfirmation] = useState(false)
   const [signUpEmail, setSignUpEmail] = useState('')
-  const [showCheckout, setShowCheckout] = useState(false)
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     email: '',
@@ -23,6 +28,12 @@ export default function Login() {
     confirmPassword: '',
     fullName: ''
   })
+  const irParaCheckout = (productId: number) => {
+    window.location.href = buildCheckoutUrl(productId, {
+      email: formData.email,
+      nome: formData.fullName,
+    })
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -312,74 +323,85 @@ export default function Login() {
           </CardContent>
         </Card>
 
-        {/* Planos / Compra de chave — visível apenas na tela de cadastro */}
+        {/* Planos — visível apenas na tela de cadastro */}
         {!isLogin && !isForgotPassword && (
           <div className="mt-6 space-y-3">
             <div className="flex items-center gap-3">
               <div className="h-px flex-1 bg-border/50" />
               <span className="text-xs uppercase tracking-wider text-muted-foreground">
-                Escolha seu plano
+                Plano Profissional
               </span>
               <div className="h-px flex-1 bg-border/50" />
             </div>
 
-            {/* Plano Gratuito */}
+            {/* Plano Mensal */}
             <div className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-xl p-4">
               <div className="flex items-baseline justify-between">
-                <h3 className="font-semibold text-foreground">Gratuito</h3>
-                <span className="text-sm text-muted-foreground">R$ 0</span>
+                <h3 className="font-semibold text-foreground">Mensal</h3>
+                <span className="text-sm text-muted-foreground">renova a cada 30 dias</span>
               </div>
-              <p className="text-xs text-muted-foreground mt-1">
-                A conta que você está criando agora.
+              <p className="mt-1">
+                <span className="text-2xl font-bold text-foreground">
+                  R$ {PLANO_MENSAL_PRECO_LABEL}
+                </span>
+                <span className="text-sm text-muted-foreground"> /mês</span>
               </p>
               <ul className="mt-3 space-y-1.5 text-sm text-muted-foreground">
                 <li className="flex items-center gap-2">
-                  <Check size={14} className="text-primary" /> Cadastro e acesso ao painel
+                  <Check size={14} className="text-primary" /> Acesso completo ao BrooStock
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check size={14} className="text-primary" /> Controle básico de estoque
-                </li>
-              </ul>
-            </div>
-
-            {/* Plano Profissional */}
-            <div className="rounded-xl border border-primary/40 bg-primary/5 backdrop-blur-xl p-4 relative overflow-hidden">
-              <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wide bg-primary/20 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
-                <Sparkles size={11} /> Recomendado
-              </span>
-              <div className="flex items-baseline gap-2">
-                <h3 className="font-semibold text-foreground">Profissional</h3>
-              </div>
-              <p className="mt-1">
-                <span className="text-2xl font-bold text-primary">
-                  R$ {BROOSTOCK_LICENSE_PRICE_LABEL}
-                </span>
-              </p>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Chave de uso completa da ferramenta.
-              </p>
-              <ul className="mt-3 space-y-1.5 text-sm text-foreground/80">
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-primary" /> Tudo do plano gratuito
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-primary" /> Recursos completos do BrooStock
-                </li>
-                <li className="flex items-center gap-2">
-                  <Check size={14} className="text-primary" /> Chave enviada por e-mail na hora
+                  <Check size={14} className="text-primary" /> Pague por PIX ou cartão
                 </li>
               </ul>
               <Button
                 type="button"
-                onClick={() => setShowCheckout(true)}
+                variant="outline"
+                onClick={() => irParaCheckout(BROOSTOCK_PLANO_MENSAL_ID)}
+                className="w-full mt-4 h-11 font-semibold"
+              >
+                Assinar mensal <ArrowRight className="h-4 w-4" />
+              </Button>
+            </div>
+
+            {/* Plano Anual */}
+            <div className="rounded-xl border border-primary/40 bg-primary/5 backdrop-blur-xl p-4 relative overflow-hidden">
+              <span className="absolute top-3 right-3 text-[10px] uppercase tracking-wide bg-primary/20 text-primary px-2 py-0.5 rounded-full flex items-center gap-1">
+                <Sparkles size={11} /> Melhor valor
+              </span>
+              <h3 className="font-semibold text-foreground">Anual</h3>
+              <p className="mt-1">
+                <span className="text-2xl font-bold text-primary">
+                  R$ {PLANO_ANUAL_MENSAL_LABEL}
+                </span>
+                <span className="text-sm text-muted-foreground"> /mês</span>
+              </p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Cobrança única de R$ {PLANO_ANUAL_TOTAL_LABEL} (12 meses). Renova após 1 ano.
+              </p>
+              <ul className="mt-3 space-y-1.5 text-sm text-foreground/80">
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-primary" /> Acesso completo ao BrooStock
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-primary" /> Economia frente ao mensal
+                </li>
+                <li className="flex items-center gap-2">
+                  <Check size={14} className="text-primary" /> Parcele em até 12x no cartão
+                </li>
+              </ul>
+              <Button
+                type="button"
+                onClick={() => irParaCheckout(BROOSTOCK_PLANO_ANUAL_ID)}
                 className="w-full mt-4 h-11 font-semibold bg-primary hover:bg-primary/90 text-primary-foreground"
               >
-                <KeyRound className="h-4 w-4" /> Comprar chave
+                Assinar anual <ArrowRight className="h-4 w-4" />
               </Button>
-              <p className="text-[11px] text-center text-muted-foreground mt-2">
-                Você pode comprar antes ou depois de criar a conta.
-              </p>
             </div>
+
+            <p className="text-[11px] text-center text-muted-foreground">
+              Use o mesmo e-mail da conta na hora do pagamento. A licença é vinculada a ele.
+            </p>
           </div>
         )}
 
@@ -387,13 +409,6 @@ export default function Login() {
           Broo Technology — Todos os Direitos Reservados 2026
         </p>
       </div>
-
-      <LicenseCheckoutModal
-        open={showCheckout}
-        onClose={() => setShowCheckout(false)}
-        defaultName={formData.fullName}
-        defaultEmail={formData.email}
-      />
     </div>
   )
 }
