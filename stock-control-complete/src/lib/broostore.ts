@@ -1,21 +1,30 @@
-// Integração com o backend da BrooStore (checkout + entrega de chave de licença).
-//
-// O backend Flask (mercadopago-final) cria a cobrança no Mercado Pago e, quando o
-// pagamento PIX é aprovado, o worker reserva uma chave da tabela `chaves_licenca`
-// e a envia automaticamente por e-mail para o cliente. Aqui na BrooStock só
-// precisamos disparar a criação da cobrança e mostrar o QR Code.
+// Integração com o checkout da BrooStore (página hospedada comprar.html).
+// O BrooStock apenas redireciona para a página de pagamento, que reaproveita
+// o checkout completo (PIX + Cartão + Cupom) já testado na BrooStore.
 
 export const BROOSTORE_API = 'https://mercadopago-final.onrender.com'
 
-// ID do produto "Chave BrooStock" no catálogo (tabela `products` do Supabase da BrooStore).
-// >>> IMPORTANTE: troque este número pelo id retornado pelo script SQL
-//     (aparece no "NOTICE" do SQL Editor ao rodar o script de criação do produto).
-export const BROOSTOCK_LICENSE_PRODUCT_ID = 100
+// IDs dos produtos de assinatura no banco da BrooStore.
+// >>> Ajuste para os ids retornados pelo seed (seed_planos_broostock.py).
+export const BROOSTOCK_PLANO_MENSAL_ID = 101
+export const BROOSTOCK_PLANO_ANUAL_ID = 102
 
-// Preço apenas para exibição na tela. O valor REAL cobrado é sempre o que está
-// no Supabase (definido no servidor) — o cliente nunca define o preço.
-export const BROOSTOCK_LICENSE_PRICE = 99.9
+// Apenas para exibição. O valor REAL cobrado vem sempre do servidor.
+export const PLANO_MENSAL_PRECO_LABEL = '129,90'
+export const PLANO_ANUAL_TOTAL_LABEL = '1.078,80'
+export const PLANO_ANUAL_MENSAL_LABEL = '89,90'
 
-export const BROOSTOCK_LICENSE_PRICE_LABEL = BROOSTOCK_LICENSE_PRICE
-  .toFixed(2)
-  .replace('.', ',')
+// Monta a URL da página de checkout, passando o produto e (opcional) os
+// dados da conta. O e-mail vai travado no checkout para a licença ficar
+// vinculada ao mesmo e-mail da conta BrooStock.
+export function buildCheckoutUrl(
+  productId: number,
+  opts?: { email?: string; nome?: string }
+): string {
+  const u = new URL(`${BROOSTORE_API}/comprar.html`)
+  u.searchParams.set('produto', String(productId))
+  if (opts?.email) u.searchParams.set('email', opts.email)
+  if (opts?.nome) u.searchParams.set('nome', opts.nome)
+  u.searchParams.set('return', `${window.location.origin}/login`)
+  return u.toString()
+}
