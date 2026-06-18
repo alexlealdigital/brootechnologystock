@@ -28,3 +28,28 @@ export function buildCheckoutUrl(
   u.searchParams.set('return', `${window.location.origin}/login`)
   return u.toString()
 }
+
+export interface LicenseStatus {
+  ativa: boolean
+  plano: string | null
+  expira_em: string | null
+  status?: string
+}
+
+// Consulta o status da licença pelo e-mail. Lança erro em falha de rede/servidor
+// (o gate trata isso mostrando uma tela de "tentar novamente").
+export async function fetchLicenseStatus(
+  email: string,
+  timeoutMs = 15000
+): Promise<LicenseStatus> {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    const url = `${BROOSTORE_API}/api/licenca/status?email=${encodeURIComponent(email)}`
+    const r = await fetch(url, { signal: ctrl.signal })
+    if (!r.ok) throw new Error(`status ${r.status}`)
+    return (await r.json()) as LicenseStatus
+  } finally {
+    clearTimeout(t)
+  }
+}
