@@ -1,30 +1,27 @@
 import { useEffect, useState } from 'react'
-import { useLocation } from 'wouter'
 import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { TrendingUp, Wallet, BarChart3, Settings, X, Percent, Package, ShoppingBag, Image as ImageIcon, AlertTriangle, Users, Store, Trash2, LogOut } from 'lucide-react'
+import { AppShell } from '@/components/AppShell'
+import {
+  TrendingUp, Wallet, BarChart3, Settings, X, Package,
+  Image as ImageIcon, AlertTriangle, Users, Store, Trash2, ArrowDownLeft, ArrowUpRight,
+} from 'lucide-react'
 import { Input } from '@/components/ui/Input'
-import { supabase } from '@/lib/supabase'
-import { InstallPWA } from '@/components/InstallPWA' // Importação do componente PWA
+import { InstallPWA } from '@/components/InstallPWA'
 
 export default function Home() {
-  const [, navigate] = useLocation()
-  const { isLoaded, getStats, movements, products, paymentSettings, updatePaymentSettings, entities, channels, addEntity, deleteEntity, addChannel, deleteChannel } = useInventoryContext()
+  const {
+    isLoaded, getStats, movements, products, paymentSettings, updatePaymentSettings,
+    entities, channels, addEntity, deleteEntity, addChannel, deleteChannel,
+  } = useInventoryContext()
   const [stats, setStats] = useState<any>({
     totalRevenue: 0, totalFees: 0, totalProfit: 0, inventoryValue: 0, ticketMedio: 0,
-    topProductsByProfit: [], lowStockList: []
+    topProductsByProfit: [], lowStockList: [],
   })
   const [showSettings, setShowSettings] = useState(false)
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    navigate('/login')
-  }
   const [showManageModal, setShowManageModal] = useState<'entities' | 'channels' | null>(null)
   const [fees, setFees] = useState<any>({ credito: 0, debito: 0, pix: 0, boleto: 0 })
-  
-  // States para novos cadastros
   const [newName, setNewName] = useState('')
   const [newType, setNewType] = useState('')
 
@@ -43,6 +40,11 @@ export default function Home() {
   }, [paymentSettings])
 
   const formatCurrency = (v: number) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  const productName = (id: string) => products.find((p: any) => p.id === id)?.name || 'Produto'
+
+  const recentMovements = [...movements]
+    .sort((a: any, b: any) => new Date(b.created_at || b.date).getTime() - new Date(a.created_at || a.date).getTime())
+    .slice(0, 6)
 
   const handleAddManage = async () => {
     if (!newName) return
@@ -55,34 +57,35 @@ export default function Home() {
     setNewType('')
   }
 
-  if (!isLoaded) return <div className="min-h-screen bg-background p-6 flex items-center justify-center">Carregando...</div>
+  if (!isLoaded) {
+    return (
+      <AppShell title="Painel">
+        <p className="text-muted-foreground">Carregando...</p>
+      </AppShell>
+    )
+  }
+
+  const actions = (
+    <>
+      <InstallPWA />
+      <Button onClick={() => setShowManageModal('channels')} variant="outline" size="sm" className="border-primary text-primary hidden sm:inline-flex"><Store size={16} className="mr-2" /> Canais</Button>
+      <Button onClick={() => setShowManageModal('entities')} variant="outline" size="sm" className="border-primary text-primary hidden sm:inline-flex"><Users size={16} className="mr-2" /> Entidades</Button>
+      <Button onClick={() => setShowSettings(true)} variant="ghost" size="sm"><Settings size={18} className="sm:mr-2" /> <span className="hidden sm:inline">Taxas</span></Button>
+    </>
+  )
 
   return (
-    <div className="min-h-screen bg-background p-6">
-      <div className="flex justify-between items-center mb-8">
-        <div className="flex flex-col">
-          <h1 className="text-2xl font-bold">Broo <span className="text-primary">Stock</span> <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded ml-2">PRO</span></h1>
-          <div className="mt-2">
-            <InstallPWA /> {/* Botão de instalação aparecerá aqui quando disponível */}
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <Button onClick={() => setShowManageModal('channels')} variant="outline" size="sm" className="border-primary text-primary"><Store size={16} className="mr-2" /> Canais</Button>
-          <Button onClick={() => setShowManageModal('entities')} variant="outline" size="sm" className="border-primary text-primary"><Users size={16} className="mr-2" /> Entidades</Button>
-          <Button onClick={() => setShowSettings(true)} variant="ghost" size="sm"><Settings size={18} className="mr-2" /> Taxas</Button>
-          <Button onClick={handleLogout} variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10"><LogOut size={18} className="mr-2" /> Sair</Button>
-        </div>
+    <AppShell title="Painel Financeiro" actions={actions}>
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard title="Faturamento" value={formatCurrency(stats.totalRevenue)} icon={<Wallet className="text-primary" size={18} />} />
+        <StatCard title="Lucro Líquido" value={formatCurrency(stats.totalProfit)} icon={<BarChart3 className="text-green-500" size={18} />} color="text-green-500" />
+        <StatCard title="Margem" value={`${stats.totalRevenue > 0 ? ((stats.totalProfit / stats.totalRevenue) * 100).toFixed(1) : 0}%`} icon={<TrendingUp className="text-purple-500" size={18} />} />
+        <StatCard title="Valor Estoque" value={formatCurrency(stats.inventoryValue)} icon={<Package className="text-blue-500" size={18} />} />
       </div>
 
-      <h2 className="text-lg font-semibold mb-4 flex items-center gap-2"><Wallet size={20} className="text-primary" /> Financeiro Executivo</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-        <StatCard title="Faturamento" value={formatCurrency(stats.totalRevenue)} icon={<Wallet className="text-primary" />} />
-        <StatCard title="Lucro Líquido" value={formatCurrency(stats.totalProfit)} icon={<BarChart3 className="text-green-500" />} color="text-green-500" />
-        <StatCard title="Margem" value={`${stats.totalRevenue > 0 ? ((stats.totalProfit / stats.totalRevenue) * 100).toFixed(1) : 0}%`} icon={<TrendingUp className="text-purple-500" />} />
-        <StatCard title="Valor Estoque" value={formatCurrency(stats.inventoryValue)} icon={<Package className="text-blue-500" />} />
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-10">
+      {/* Painéis */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card className="p-6">
           <h3 className="text-md font-bold mb-4 flex items-center gap-2 text-green-500"><TrendingUp size={18} /> Top 5 Produtos Mais Lucrativos</h3>
           <div className="space-y-3">
@@ -96,7 +99,7 @@ export default function Home() {
                 </div>
                 <span className="text-sm font-bold text-green-600">{formatCurrency(p.profit)}</span>
               </div>
-            )) : <p className="text-sm text-muted-foreground">Sem dados de lucro.</p>}
+            )) : <p className="text-sm text-muted-foreground">Sem dados de lucro ainda.</p>}
           </div>
         </Card>
 
@@ -134,11 +137,36 @@ export default function Home() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <Button onClick={() => navigate('/products')} className="h-24 text-lg flex flex-col gap-1"><Package /> Produtos</Button>
-        <Button onClick={() => navigate('/movements')} className="h-24 text-lg flex flex-col gap-1"><TrendingUp /> Movimentações</Button>
-        <Button onClick={() => navigate('/reports')} className="h-24 text-lg flex flex-col gap-1"><BarChart3 /> Relatórios</Button>
-      </div>
+      {/* Movimentações recentes */}
+      <Card className="p-6">
+        <h3 className="text-md font-bold mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-primary" /> Movimentações Recentes</h3>
+        {recentMovements.length > 0 ? (
+          <div className="divide-y divide-border/40">
+            {recentMovements.map((m: any) => {
+              const entrada = m.type === 'entrada'
+              return (
+                <div key={m.id} className="flex items-center justify-between py-2.5">
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${entrada ? 'bg-green-500/15 text-green-500' : 'bg-red-500/15 text-red-500'}`}>
+                      {entrada ? <ArrowDownLeft size={15} /> : <ArrowUpRight size={15} />}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{productName(m.product_id)}</p>
+                      <p className="text-xs text-muted-foreground capitalize">{m.reason} · {entrada ? 'entrada' : 'saída'}</p>
+                    </div>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className={`text-sm font-semibold ${entrada ? 'text-green-500' : 'text-red-400'}`}>{entrada ? '+' : '-'}{m.quantity}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(m.created_at || m.date).toLocaleDateString('pt-BR')}</p>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">Nenhuma movimentação registrada ainda.</p>
+        )}
+      </Card>
 
       {/* Modal de Canais/Entidades */}
       {showManageModal && (
@@ -180,14 +208,14 @@ export default function Home() {
             {Object.entries(fees).map(([name, val]: any) => (
               <div key={name} className="mb-3">
                 <label className="block text-sm capitalize mb-1">{name}</label>
-                <Input type="number" step="0.01" value={val} onChange={e => setFees({...fees, [name]: parseFloat(e.target.value) || 0})} />
+                <Input type="number" step="0.01" value={val} onChange={e => setFees({ ...fees, [name]: parseFloat(e.target.value) || 0 })} />
               </div>
             ))}
-            <Button onClick={async () => { await updatePaymentSettings(Object.entries(fees).map(([n, v]) => ({method_name: n, fee_percentage: v}))); setShowSettings(false); }} className="w-full mt-4">Salvar</Button>
+            <Button onClick={async () => { await updatePaymentSettings(Object.entries(fees).map(([n, v]) => ({ method_name: n, fee_percentage: v }))); setShowSettings(false); }} className="w-full mt-4">Salvar</Button>
           </Card>
         </div>
       )}
-    </div>
+    </AppShell>
   )
 }
 
