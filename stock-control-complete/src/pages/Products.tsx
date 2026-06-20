@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Tag, Image as ImageIcon, Barcode, Box, Upload, Loader2, Settings, LogOut } from 'lucide-react'
 import { Footer } from '@/components/ui/Footer'
 import { supabase } from '@/lib/supabase'
+import { AppShell } from '@/components/AppShell'
 
 export default function Products() {
   const [, navigate] = useLocation()
@@ -85,29 +86,19 @@ export default function Products() {
   if (!isLoaded) return null
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="bg-card/50 border-b border-border backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button onClick={() => navigate('/')} variant="ghost" size="sm"><ArrowLeft size={18} /></Button>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="text-primary h-6 w-6" />
-              <h1 className="text-2xl font-bold">Broo <span className="text-primary">Stock</span></h1>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => setShowCatModal(true)} variant="outline" className="border-primary text-primary hover:bg-primary/10">
-              <Plus size={18} className="mr-2" /> Nova Categoria
-            </Button>
-            <Button onClick={() => handleOpenModal()} className="bg-primary text-white">
-              <Plus size={18} className="mr-2" /> Novo Produto
-            </Button>
-            <Button onClick={handleLogout} variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10"><LogOut size={18} className="mr-2" /> Sair</Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
+    <AppShell
+      title="Produtos"
+      actions={(
+        <>
+          <Button onClick={() => setShowCatModal(true)} variant="outline" size="sm" className="border-primary text-primary hover:bg-primary/10">
+            <Plus size={16} className="sm:mr-1" /> <span className="hidden sm:inline">Categoria</span>
+          </Button>
+          <Button onClick={() => handleOpenModal()} size="sm" className="bg-primary text-white">
+            <Plus size={16} className="sm:mr-1" /> <span className="hidden sm:inline">Novo Produto</span>
+          </Button>
+        </>
+      )}
+    >
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {products.map((p) => (
             <Card key={p.id} className="p-4 flex flex-col relative overflow-hidden">
@@ -143,7 +134,6 @@ export default function Products() {
             </Card>
           ))}
         </div>
-      </main>
 
       {/* Modal de Categoria */}
       {showCatModal && (
@@ -275,6 +265,6 @@ export default function Products() {
         </div>
       )}
       <Footer />
-    </div>
+    </AppShell>
   )
 }
