@@ -5,6 +5,7 @@ import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { ArrowLeft } from 'lucide-react'
+import { AppShell } from '@/components/AppShell'
 
 export default function Reports() {
   const [, navigate] = useLocation()
@@ -30,21 +31,8 @@ export default function Reports() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-card border-b border-border">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex items-center gap-4">
-          <Button onClick={() => navigate('/')} variant="ghost" size="sm">
-            <ArrowLeft size={18} />
-          </Button>
-          <h1 className="text-3xl font-bold text-foreground" style={{ fontFamily: 'Poppins' }}>
-            Relatórios
-          </h1>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+    <AppShell title="Relatórios">
+      <div className="space-y-8">
         {/* Low Stock */}
         <div>
           <h2 className="text-2xl font-bold text-foreground mb-4" style={{ fontFamily: 'Poppins' }}>
@@ -141,6 +129,6 @@ export default function Reports() {
           </Card>
         </div>
       </div>
-    </div>
+    </AppShell>
   )
 }
