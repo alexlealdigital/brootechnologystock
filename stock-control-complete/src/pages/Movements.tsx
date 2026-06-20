@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Users, ShoppingBag, Image as ImageIcon, LogOut } from 'lucide-react'
 import { Footer } from '@/components/ui/Footer'
 import { supabase } from '@/lib/supabase'
+import { AppShell } from '@/components/AppShell'
 
 export default function Movements() {
   const [, navigate] = useLocation()
@@ -74,24 +75,14 @@ export default function Movements() {
   if (!isLoaded) return null
 
   return (
-    <div className="min-h-screen bg-background flex flex-col">
-      <header className="bg-card/50 border-b border-border backdrop-blur-md sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-          <div className="flex items-center gap-4">
-            <Button onClick={() => navigate('/')} variant="ghost" size="sm"><ArrowLeft size={18} /></Button>
-            <div className="flex items-center gap-2">
-              <ShieldCheck className="text-primary h-6 w-6" />
-              <h1 className="text-2xl font-bold">Broo <span className="text-primary">Stock</span></h1>
-            </div>
-          </div>
-          <div className="flex gap-2">
-            <Button onClick={() => handleOpenModal()} className="bg-primary text-white"><Plus size={18} className="mr-2" /> Nova Movimentação</Button>
-            <Button onClick={handleLogout} variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10"><LogOut size={18} className="mr-2" /> Sair</Button>
-          </div>
-        </div>
-      </header>
-
-      <main className="flex-grow max-w-7xl mx-auto px-4 py-8 w-full">
+    <AppShell
+      title="Movimentações"
+      actions={(
+        <Button onClick={() => handleOpenModal()} size="sm" className="bg-primary text-white">
+          <Plus size={16} className="sm:mr-1" /> <span className="hidden sm:inline">Nova Movimentação</span>
+        </Button>
+      )}
+    >
         <Card className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-secondary/50">
@@ -138,7 +129,6 @@ export default function Movements() {
             </tbody>
           </table>
         </Card>
-      </main>
 
       {showModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[100] p-4 overflow-y-auto">
@@ -226,6 +216,6 @@ export default function Movements() {
         </div>
       )}
       <Footer />
-    </div>
+    </AppShell>
   )
 }
