@@ -2,12 +2,13 @@ import { ReactNode, useState } from 'react'
 import { useLocation } from 'wouter'
 import { supabase } from '@/lib/supabase'
 import { LayoutDashboard, Package, TrendingUp, BarChart3, LogOut, Menu, X } from 'lucide-react'
+import { Tooltip } from '@/components/ui/Hints'
 
 const NAV = [
-  { label: 'Painel', icon: LayoutDashboard, path: '/painel' },
-  { label: 'Produtos', icon: Package, path: '/products' },
-  { label: 'Movimentações', icon: TrendingUp, path: '/movements' },
-  { label: 'Relatórios', icon: BarChart3, path: '/reports' },
+  { label: 'Painel', icon: LayoutDashboard, path: '/painel', desc: 'Visão geral do seu negócio: lucro, estoque e vendas.' },
+  { label: 'Produtos', icon: Package, path: '/products', desc: 'Cadastre e edite seus produtos, custos e estoque.' },
+  { label: 'Movimentações', icon: TrendingUp, path: '/movements', desc: 'Registre entradas e saídas (compras e vendas).' },
+  { label: 'Relatórios', icon: BarChart3, path: '/reports', desc: 'Análises e histórico do seu negócio.' },
 ]
 
 interface AppShellProps {
@@ -45,19 +46,20 @@ export function AppShell({ title, actions, children }: AppShellProps) {
           const active = location === item.path
           const Icon = item.icon
           return (
-            <button
-              key={item.path}
-              onClick={() => go(item.path)}
-              className={`w-full flex items-center gap-2.5 pl-2 pr-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                active
-                  ? 'bg-primary/15 text-primary'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
-              }`}
-            >
-              <span className={`w-1 h-5 rounded-full ${active ? 'bg-primary' : 'bg-transparent'}`} />
-              <Icon size={18} />
-              {item.label}
-            </button>
+            <Tooltip key={item.path} label={item.desc} side="right">
+              <button
+                onClick={() => go(item.path)}
+                className={`w-full flex items-center gap-2.5 pl-2 pr-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                  active
+                    ? 'bg-primary/15 text-primary'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-secondary/40'
+                }`}
+              >
+                <span className={`w-1 h-5 rounded-full ${active ? 'bg-primary' : 'bg-transparent'}`} />
+                <Icon size={18} />
+                {item.label}
+              </button>
+            </Tooltip>
           )
         })}
       </nav>
@@ -65,7 +67,7 @@ export function AppShell({ title, actions, children }: AppShellProps) {
       <div className="px-3 py-4 border-t border-border/60">
         <button
           onClick={logout}
-          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-destructive/80 hover:text-destructive hover:bg-destructive/10 transition-colors"
+          className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm font-medium text-foreground/80 hover:text-red-400 hover:bg-red-500/10 transition-colors"
         >
           <LogOut size={18} />
           Sair
