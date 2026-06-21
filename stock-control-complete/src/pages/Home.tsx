@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { AppShell } from '@/components/AppShell'
 import { InstallPWA } from '@/components/InstallPWA'
 import { InfoHint } from '@/components/ui/Hints'
-import { DonutChart, AreaTrend } from '@/components/Charts'
+import { DonutChart, AreaTrend, CompareBars } from '@/components/Charts'
 import {
   TrendingUp, Wallet, BarChart3, Settings, X, Package, Image as ImageIcon,
   AlertTriangle, Users, Store, Trash2, ArrowDownLeft, ArrowUpRight, CreditCard,
@@ -181,12 +181,16 @@ export default function Home() {
           <Card className="p-6 lg:col-span-2">
             <div className="flex items-center justify-between mb-2">
               <h3 className="text-md font-bold flex items-center gap-2"><TrendingUp size={18} className="text-primary" /> Faturamento × Lucro</h3>
-              <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary inline-block" /> Faturamento</span>
-                <span className="flex items-center gap-1.5"><span className="w-3 h-0 border-t-2 border-dashed border-green-400 inline-block" /> Lucro</span>
-              </div>
+              {stats.trend.length >= 2 && (
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary inline-block" /> Faturamento</span>
+                  <span className="flex items-center gap-1.5"><span className="w-3 h-0 border-t-2 border-dashed border-green-400 inline-block" /> Lucro</span>
+                </div>
+              )}
             </div>
-            <AreaTrend data={stats.trend} />
+            {stats.trend.length >= 2
+              ? <AreaTrend data={stats.trend} />
+              : <CompareBars revenue={stats.revenue} profit={stats.profit} />}
           </Card>
 
           {/* Mix de pagamento */}
