@@ -1,24 +1,41 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Card } from '@/components/ui/Card'
-import { AppShell } from '@/components/AppShell'
-import {
-  TrendingUp, Wallet, BarChart3, Settings, X, Package,
-  Image as ImageIcon, AlertTriangle, Users, Store, Trash2, ArrowDownLeft, ArrowUpRight,
-} from 'lucide-react'
 import { Input } from '@/components/ui/Input'
+import { AppShell } from '@/components/AppShell'
 import { InstallPWA } from '@/components/InstallPWA'
+import { InfoHint } from '@/components/ui/Hints'
+import { DonutChart, AreaTrend } from '@/components/Charts'
+import {
+  TrendingUp, Wallet, BarChart3, Settings, X, Package, Image as ImageIcon,
+  AlertTriangle, Users, Store, Trash2, ArrowDownLeft, ArrowUpRight, CreditCard,
+} from 'lucide-react'
+
+type Period = 'hoje' | '7d' | '30d' | 'mes' | 'tudo'
+const PERIODS: { k: Period; label: string }[] = [
+  { k: 'hoje', label: 'Hoje' },
+  { k: '7d', label: '7 dias' },
+  { k: '30d', label: '30 dias' },
+  { k: 'mes', label: 'Mês' },
+  { k: 'tudo', label: 'Tudo' },
+]
+
+const PAY_META: Record<string, { label: string; color: string }> = {
+  pix: { label: 'PIX', color: '#22c55e' },
+  credito: { label: 'Crédito', color: '#3b82f6' },
+  debito: { label: 'Débito', color: '#a855f7' },
+  boleto: { label: 'Boleto', color: '#f59e0b' },
+  outro: { label: 'Outro', color: '#64748b' },
+}
 
 export default function Home() {
   const {
-    isLoaded, getStats, movements, products, paymentSettings, updatePaymentSettings,
+    isLoaded, movements, products, paymentSettings, updatePaymentSettings,
     entities, channels, addEntity, deleteEntity, addChannel, deleteChannel,
   } = useInventoryContext()
-  const [stats, setStats] = useState<any>({
-    totalRevenue: 0, totalFees: 0, totalProfit: 0, inventoryValue: 0, ticketMedio: 0,
-    topProductsByProfit: [], lowStockList: [],
-  })
+
+  const [period, setPeriod] = useState<Period>('30d')
   const [showSettings, setShowSettings] = useState(false)
   const [showManageModal, setShowManageModal] = useState<'entities' | 'channels' | null>(null)
   const [fees, setFees] = useState<any>({ credito: 0, debito: 0, pix: 0, boleto: 0 })
@@ -26,43 +43,96 @@ export default function Home() {
   const [newType, setNewType] = useState('')
 
   useEffect(() => {
-    if (isLoaded) {
-      getStats().then(setStats)
-    }
-  }, [isLoaded, movements, products, paymentSettings, getStats])
-
-  useEffect(() => {
     if (paymentSettings.length > 0) {
-      const newFees = { credito: 0, debito: 0, pix: 0, boleto: 0 }
-      paymentSettings.forEach(s => { if (s.method_name in newFees) newFees[s.method_name as keyof typeof newFees] = s.fee_percentage })
-      setFees(newFees)
+      const nf = { credito: 0, debito: 0, pix: 0, boleto: 0 }
+      paymentSettings.forEach(s => { if (s.method_name in nf) nf[s.method_name as keyof typeof nf] = s.fee_percentage })
+      setFees(nf)
     }
   }, [paymentSettings])
 
-  const formatCurrency = (v: number) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  const brl = (v: number) => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
   const productName = (id: string) => products.find((p: any) => p.id === id)?.name || 'Produto'
 
-  const recentMovements = [...movements]
-    .sort((a: any, b: any) => new Date(b.created_at || b.date).getTime() - new Date(a.created_at || a.date).getTime())
-    .slice(0, 6)
+  // ===== Cálculos do período =====
+  const stats = useMemo(() => {
+    const now = new Date()
+    const inPeriod = (s?: string) => {
+      if (!s) return false
+      const d = new Date(s)
+      if (period === 'tudo') return true
+      if (period === 'hoje') return d.toDateString() === now.toDateString()
+      if (period === 'mes') return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear()
+      const days = period === '7d' ? 7 : 30
+      const cutoff = new Date(now); cutoff.setDate(now.getDate() - days); cutoff.setHours(0, 0, 0, 0)
+      return d >= cutoff
+    }
+
+    const sales = movements.filter((m: any) => m.type === 'saida' && m.reason === 'venda' && inPeriod(m.date || m.created_at))
+    const costOf = (m: any) => ((products.find((p: any) => p.id === m.product_id)?.cost_price || 0) * m.quantity)
+
+    const revenue = sales.reduce((s: number, m: any) => s + m.quantity * (m.sale_price || 0), 0)
+    const feesTotal = sales.reduce((s: number, m: any) => s + (m.fee_amount || 0), 0)
+    const profit = sales.reduce((s: number, m: any) => s + (m.quantity * (m.sale_price || 0)) - costOf(m) - (m.fee_amount || 0), 0)
+    const ticket = sales.length > 0 ? revenue / sales.length : 0
+    const margin = revenue > 0 ? (profit / revenue) * 100 : 0
+    const inventoryValue = products.reduce((s: number, p: any) => s + (p.quantity * (p.cost_price || 0)), 0)
+
+    // Top produtos por lucro
+    const byProd: any = {}
+    sales.forEach((m: any) => {
+      const p = products.find((x: any) => x.id === m.product_id)
+      const k = m.product_id
+      if (!byProd[k]) byProd[k] = { name: p?.name || 'Desconhecido', image_url: p?.image_url, profit: 0 }
+      byProd[k].profit += (m.quantity * (m.sale_price || 0)) - costOf(m) - (m.fee_amount || 0)
+    })
+    const topProducts = Object.values(byProd).sort((a: any, b: any) => b.profit - a.profit).slice(0, 5)
+
+    // Mix de pagamento
+    const payMap: any = {}
+    sales.forEach((m: any) => {
+      const k = m.payment_method || 'outro'
+      if (!payMap[k]) payMap[k] = { revenue: 0, fees: 0, count: 0 }
+      payMap[k].revenue += m.quantity * (m.sale_price || 0)
+      payMap[k].fees += m.fee_amount || 0
+      payMap[k].count += 1
+    })
+    const payList = Object.entries(payMap)
+      .map(([k, v]: any) => ({ key: k, ...PAY_META[k] || PAY_META.outro, ...v }))
+      .sort((a, b) => b.revenue - a.revenue)
+
+    // Tendência diária (faturamento × lucro)
+    const dayMap = new Map<string, { revenue: number; profit: number }>()
+    sales.forEach((m: any) => {
+      const dt = new Date(m.date || m.created_at)
+      const key = dt.toISOString().slice(0, 10)
+      const cur = dayMap.get(key) || { revenue: 0, profit: 0 }
+      cur.revenue += m.quantity * (m.sale_price || 0)
+      cur.profit += (m.quantity * (m.sale_price || 0)) - costOf(m) - (m.fee_amount || 0)
+      dayMap.set(key, cur)
+    })
+    const trend = [...dayMap.entries()]
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .slice(-30)
+      .map(([k, v]) => ({ label: new Date(k).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }), value: v.revenue, value2: v.profit }))
+
+    const lowStock = products.filter((p: any) => p.quantity <= p.min_quantity).sort((a: any, b: any) => a.quantity - b.quantity)
+
+    return { sales, revenue, feesTotal, profit, ticket, margin, inventoryValue, topProducts, payList, trend, lowStock, count: sales.length }
+  }, [movements, products, period])
+
+  const recentMovements = useMemo(() =>
+    [...movements].sort((a: any, b: any) => new Date(b.created_at || b.date).getTime() - new Date(a.created_at || a.date).getTime()).slice(0, 6),
+    [movements])
 
   const handleAddManage = async () => {
     if (!newName) return
-    if (showManageModal === 'entities') {
-      await addEntity({ name: newName, type: newType || 'cliente' })
-    } else {
-      await addChannel({ name: newName, type: 'online' })
-    }
-    setNewName('')
-    setNewType('')
+    if (showManageModal === 'entities') await addEntity({ name: newName, type: newType || 'cliente' })
+    else await addChannel({ name: newName, type: 'online' })
+    setNewName(''); setNewType('')
   }
 
   if (!isLoaded) {
-    return (
-      <AppShell title="Painel">
-        <p className="text-muted-foreground">Carregando...</p>
-      </AppShell>
-    )
+    return <AppShell title="Painel"><p className="text-muted-foreground">Carregando...</p></AppShell>
   }
 
   const actions = (
@@ -74,22 +144,83 @@ export default function Home() {
     </>
   )
 
+  const semVendas = stats.count === 0
+
   return (
     <AppShell title="Painel Financeiro" actions={actions}>
-      {/* KPIs */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <StatCard title="Faturamento" value={formatCurrency(stats.totalRevenue)} icon={<Wallet className="text-primary" size={18} />} />
-        <StatCard title="Lucro Líquido" value={formatCurrency(stats.totalProfit)} icon={<BarChart3 className="text-green-500" size={18} />} color="text-green-500" />
-        <StatCard title="Margem" value={`${stats.totalRevenue > 0 ? ((stats.totalProfit / stats.totalRevenue) * 100).toFixed(1) : 0}%`} icon={<TrendingUp className="text-purple-500" size={18} />} />
-        <StatCard title="Valor Estoque" value={formatCurrency(stats.inventoryValue)} icon={<Package className="text-blue-500" size={18} />} />
+      {/* Filtro de período */}
+      <div className="flex items-center gap-2 mb-5 overflow-x-auto pb-1">
+        {PERIODS.map(p => (
+          <button
+            key={p.k}
+            onClick={() => setPeriod(p.k)}
+            className={`px-3.5 py-1.5 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${period === p.k ? 'bg-primary text-primary-foreground' : 'bg-card/50 text-muted-foreground hover:text-foreground border border-border/50'}`}
+          >
+            {p.label}
+          </button>
+        ))}
       </div>
 
-      {/* Painéis */}
+      {/* KPIs */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard title="Faturamento" value={brl(stats.revenue)} icon={<Wallet className="text-primary" size={18} />} hint="Soma das suas vendas no período (preço × quantidade)." />
+        <StatCard title="Lucro Líquido" value={brl(stats.profit)} icon={<BarChart3 className="text-green-500" size={18} />} color="text-green-500" hint="O que sobra de fato: vendas − custo dos produtos − taxas de pagamento." />
+        <StatCard title="Margem" value={`${stats.margin.toFixed(1)}%`} icon={<TrendingUp className="text-purple-500" size={18} />} hint="Quanto do faturamento virou lucro (lucro ÷ faturamento)." />
+        <StatCard title="Valor Estoque" value={brl(stats.inventoryValue)} icon={<Package className="text-blue-500" size={18} />} hint="Quanto você tem investido em estoque, pelo custo dos produtos." />
+      </div>
+
+      {semVendas ? (
+        <Card className="p-8 text-center mb-6">
+          <TrendingUp className="mx-auto text-muted-foreground mb-3" size={28} />
+          <p className="font-semibold">Sem vendas neste período</p>
+          <p className="text-sm text-muted-foreground mt-1">Registre uma movimentação de venda ou troque o período acima para ver seus números.</p>
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Tendência */}
+          <Card className="p-6 lg:col-span-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-md font-bold flex items-center gap-2"><TrendingUp size={18} className="text-primary" /> Faturamento × Lucro</h3>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <span className="flex items-center gap-1.5"><span className="w-3 h-0.5 bg-primary inline-block" /> Faturamento</span>
+                <span className="flex items-center gap-1.5"><span className="w-3 h-0 border-t-2 border-dashed border-green-400 inline-block" /> Lucro</span>
+              </div>
+            </div>
+            <AreaTrend data={stats.trend} />
+          </Card>
+
+          {/* Mix de pagamento */}
+          <Card className="p-6">
+            <h3 className="text-md font-bold mb-3 flex items-center gap-2"><CreditCard size={18} className="text-primary" /> Meios de Pagamento</h3>
+            <div className="flex justify-center mb-4">
+              <DonutChart data={stats.payList.map(p => ({ label: p.label, value: p.revenue, color: p.color }))} />
+            </div>
+            <div className="space-y-2">
+              {stats.payList.map(p => (
+                <div key={p.key} className="flex items-center justify-between text-sm">
+                  <span className="flex items-center gap-2"><span className="w-2.5 h-2.5 rounded-full" style={{ background: p.color }} /> {p.label}</span>
+                  <span className="text-right">
+                    <span className="font-medium">{brl(p.revenue)}</span>
+                    {p.fees > 0 && <span className="text-xs text-red-400 ml-2">−{brl(p.fees)} taxa</span>}
+                  </span>
+                </div>
+              ))}
+            </div>
+            {stats.feesTotal > 0 && (
+              <p className="text-xs text-muted-foreground mt-3 pt-3 border-t border-border/40">
+                Total pago em taxas no período: <span className="text-red-400 font-medium">{brl(stats.feesTotal)}</span>
+              </p>
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* Top produtos + Estoque baixo */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
         <Card className="p-6">
-          <h3 className="text-md font-bold mb-4 flex items-center gap-2 text-green-500"><TrendingUp size={18} /> Top 5 Produtos Mais Lucrativos</h3>
+          <h3 className="text-md font-bold mb-4 flex items-center gap-2 text-green-500"><TrendingUp size={18} /> Top Produtos Mais Lucrativos</h3>
           <div className="space-y-3">
-            {stats.topProductsByProfit.length > 0 ? stats.topProductsByProfit.map((p: any, i: number) => (
+            {stats.topProducts.length > 0 ? stats.topProducts.map((p: any, i: number) => (
               <div key={i} className="flex justify-between items-center border-b border-border/50 pb-2 last:border-0">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-secondary rounded flex items-center justify-center overflow-hidden shrink-0">
@@ -97,9 +228,9 @@ export default function Home() {
                   </div>
                   <span className="text-sm font-medium truncate max-w-[150px]">{p.name}</span>
                 </div>
-                <span className="text-sm font-bold text-green-600">{formatCurrency(p.profit)}</span>
+                <span className="text-sm font-bold text-green-600">{brl(p.profit)}</span>
               </div>
-            )) : <p className="text-sm text-muted-foreground">Sem dados de lucro ainda.</p>}
+            )) : <p className="text-sm text-muted-foreground">Sem dados de lucro neste período.</p>}
           </div>
         </Card>
 
@@ -117,7 +248,7 @@ export default function Home() {
                 </tr>
               </thead>
               <tbody>
-                {stats.lowStockList.length > 0 ? stats.lowStockList.map((p: any) => (
+                {stats.lowStock.length > 0 ? stats.lowStock.map((p: any) => (
                   <tr key={p.id} className="border-b border-border/30 last:border-0">
                     <td className="py-2 flex items-center gap-2">
                       <div className="w-6 h-6 bg-secondary rounded flex items-center justify-center overflow-hidden shrink-0">
@@ -163,12 +294,10 @@ export default function Home() {
               )
             })}
           </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">Nenhuma movimentação registrada ainda.</p>
-        )}
+        ) : <p className="text-sm text-muted-foreground">Nenhuma movimentação registrada ainda.</p>}
       </Card>
 
-      {/* Modal de Canais/Entidades */}
+      {/* Modal Canais/Entidades */}
       {showManageModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-[110] p-4">
           <Card className="w-full max-w-md p-6 relative">
@@ -219,11 +348,13 @@ export default function Home() {
   )
 }
 
-function StatCard({ title, value, icon, color = "" }: any) {
+function StatCard({ title, value, icon, color = '', hint }: any) {
   return (
     <Card className="p-4 flex flex-col justify-between">
       <div className="flex justify-between items-center mb-2">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold">{title}</span>
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-bold flex items-center gap-1.5">
+          {title} {hint && <InfoHint text={hint} />}
+        </span>
         {icon}
       </div>
       <div className={`text-lg font-bold truncate ${color}`}>{value}</div>
