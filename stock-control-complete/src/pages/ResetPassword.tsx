@@ -75,7 +75,7 @@ export default function ResetPassword() {
 
       // Pequeno delay para o usuário ver o toast antes de redirecionar
       setTimeout(() => {
-        navigate('/')
+        navigate('/painel')
       }, 1500)
     } catch (error: any) {
       toast.error(error.message || 'Erro ao atualizar a senha')
