@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { LayoutDashboard, Package, TrendingUp, BarChart3, LogOut, Menu, X } from 'lucide-react'
 
 const NAV = [
-  { label: 'Painel', icon: LayoutDashboard, path: '/' },
+  { label: 'Painel', icon: LayoutDashboard, path: '/painel' },
   { label: 'Produtos', icon: Package, path: '/products' },
   { label: 'Movimentações', icon: TrendingUp, path: '/movements' },
   { label: 'Relatórios', icon: BarChart3, path: '/reports' },
