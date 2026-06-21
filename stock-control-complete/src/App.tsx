@@ -7,6 +7,7 @@ import { Toaster } from 'sonner'
 import { fetchLicenseStatus } from '@/lib/broostore'
 
 import Login from '@/pages/Login'
+import Landing from '@/pages/Landing'
 import ResetPassword from '@/pages/ResetPassword'
 import Home from '@/pages/Home'
 import Products from '@/pages/Products'
@@ -16,7 +17,7 @@ import StoreCatalog from '@/pages/StoreCatalog'
 import LicenseRequired from '@/pages/LicenseRequired'
 
 // Rotas públicas — acessíveis sem autenticação e sem checagem de licença
-const PUBLIC_ROUTES = ['/login', '/reset-password', '/loja']
+const PUBLIC_ROUTES = ['/', '/login', '/reset-password', '/loja']
 
 type LicenseState = 'idle' | 'checking' | 'active' | 'inactive' | 'error'
 
@@ -41,8 +42,8 @@ function Router() {
 
       if (!hasUser && !isPublicRoute) {
         navigate('/login')
-      } else if (hasUser && location === '/login') {
-        navigate('/')
+      } else if (hasUser && (location === '/login' || location === '/')) {
+        navigate('/painel')
       }
     }
 
@@ -61,7 +62,7 @@ function Router() {
 
       if (event === 'SIGNED_IN') {
         setLicense('idle') // força nova checagem de licença
-        if (location === '/login') navigate('/')
+        if (location === '/login' || location === '/') navigate('/painel')
       } else if (event === 'SIGNED_OUT') {
         setLicense('idle')
         navigate('/login')
@@ -162,6 +163,7 @@ function Router() {
   return (
     <Switch>
       {/* Rotas públicas */}
+      <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/reset-password" component={ResetPassword} />
       <Route path="/loja" component={StoreCatalog} />
@@ -169,7 +171,7 @@ function Router() {
       {/* Rotas protegidas */}
       {isAuthenticated ? (
         <>
-          <Route path="/" component={Home} />
+          <Route path="/painel" component={Home} />
           <Route path="/products" component={Products} />
           <Route path="/movements" component={Movements} />
           <Route path="/reports" component={Reports} />
