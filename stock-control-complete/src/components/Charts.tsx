@@ -102,3 +102,34 @@ export function AreaTrend({ data, height = 180 }: { data: TrendPoint[]; height?:
     </svg>
   )
 }
+
+/** Comparação direta Faturamento × Lucro — usada quando ainda não há
+ *  histórico suficiente (menos de 2 dias) para um gráfico de tendência. */
+export function CompareBars({ revenue, profit }: { revenue: number; profit: number }) {
+  const brl = (v: number) => v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
+  const max = Math.max(revenue, profit, 1)
+  const margin = revenue > 0 ? (profit / revenue) * 100 : 0
+
+  const Bar = ({ label, value, color }: { label: string; value: number; color: string }) => (
+    <div>
+      <div className="flex justify-between text-sm mb-1">
+        <span className="text-muted-foreground">{label}</span>
+        <span className="font-semibold">{brl(value)}</span>
+      </div>
+      <div className="h-3.5 rounded-full bg-secondary/40 overflow-hidden">
+        <div className="h-full rounded-full transition-all" style={{ width: `${(value / max) * 100}%`, background: color }} />
+      </div>
+    </div>
+  )
+
+  return (
+    <div className="space-y-5 py-6">
+      <Bar label="Faturamento" value={revenue} color="hsl(var(--primary))" />
+      <Bar label="Lucro Líquido" value={profit} color="#4ade80" />
+      <p className="text-xs text-muted-foreground pt-1">
+        Margem de <span className="text-foreground font-medium">{margin.toFixed(1)}%</span> — de cada R$ 100 vendidos, sobram R$ {margin.toFixed(2)} de lucro.
+        <br />Registre vendas em dias diferentes para ver a evolução no tempo.
+      </p>
+    </div>
+  )
+}
