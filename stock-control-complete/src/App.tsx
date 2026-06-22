@@ -10,6 +10,7 @@ import Login from '@/pages/Login'
 import Landing from '@/pages/Landing'
 import ResetPassword from '@/pages/ResetPassword'
 import Home from '@/pages/Home'
+import ComoUsar from '@/pages/ComoUsar'
 import Products from '@/pages/Products'
 import Movements from '@/pages/Movements'
 import Reports from '@/pages/Reports'
@@ -175,6 +176,7 @@ function Router() {
           <Route path="/products" component={Products} />
           <Route path="/movements" component={Movements} />
           <Route path="/reports" component={Reports} />
+          <Route path="/como-usar" component={ComoUsar} />
         </>
       ) : (
         <Route
