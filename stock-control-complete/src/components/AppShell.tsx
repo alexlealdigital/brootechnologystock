@@ -1,7 +1,7 @@
 import { ReactNode, useState } from 'react'
 import { useLocation } from 'wouter'
 import { supabase } from '@/lib/supabase'
-import { LayoutDashboard, Package, TrendingUp, BarChart3, LogOut, Menu, X } from 'lucide-react'
+import { LayoutDashboard, Package, TrendingUp, BarChart3, BookOpen, LogOut, Menu, X } from 'lucide-react'
 import { Tooltip } from '@/components/ui/Hints'
 
 const NAV = [
@@ -9,6 +9,7 @@ const NAV = [
   { label: 'Produtos', icon: Package, path: '/products', desc: 'Cadastre e edite seus produtos, custos e estoque.' },
   { label: 'Movimentações', icon: TrendingUp, path: '/movements', desc: 'Registre entradas e saídas (compras e vendas).' },
   { label: 'Relatórios', icon: BarChart3, path: '/reports', desc: 'Análises e histórico do seu negócio.' },
+  { label: 'Como Usar', icon: BookOpen, path: '/como-usar', desc: 'Vídeos curtos ensinando a usar o sistema.' },
 ]
 
 interface AppShellProps {
