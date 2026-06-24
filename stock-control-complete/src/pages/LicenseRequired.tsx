@@ -1,5 +1,6 @@
+import { useState } from 'react'
 import { Button } from '@/components/ui/Button'
-import { ShieldAlert, ArrowRight, RefreshCw, LogOut, Check, Sparkles } from 'lucide-react'
+import { ShieldAlert, ArrowRight, RefreshCw, LogOut, Check, Sparkles, Gift, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase'
 import {
   buildCheckoutUrl,
@@ -8,17 +9,38 @@ import {
   PLANO_MENSAL_PRECO_LABEL,
   PLANO_ANUAL_TOTAL_LABEL,
   PLANO_ANUAL_MENSAL_LABEL,
+  startTrial,
 } from '@/lib/broostore'
 
 interface LicenseRequiredProps {
   email: string
   expiraEm?: string | null
   plano?: string | null
+  podeTestar?: boolean
   onRecheck: () => void
 }
 
-export default function LicenseRequired({ email, expiraEm, plano, onRecheck }: LicenseRequiredProps) {
+export default function LicenseRequired({ email, expiraEm, plano, podeTestar, onRecheck }: LicenseRequiredProps) {
   const expirou = !!expiraEm
+  const [trialLoading, setTrialLoading] = useState(false)
+  const [trialErro, setTrialErro] = useState<string | null>(null)
+
+  const iniciarTeste = async () => {
+    setTrialErro(null)
+    setTrialLoading(true)
+    try {
+      const r = await startTrial(email)
+      if (r.ok || r.ativa) {
+        onRecheck()
+      } else {
+        setTrialErro(r.motivo === 'ja_utilizado' ? 'Este e-mail já usou o teste grátis.' : 'Não foi possível iniciar o teste. Tente novamente.')
+      }
+    } catch {
+      setTrialErro('Falha de conexão. Tente novamente.')
+    } finally {
+      setTrialLoading(false)
+    }
+  }
   const dataExpiracao = expiraEm
     ? new Date(expiraEm).toLocaleDateString('pt-BR')
     : null
@@ -44,12 +66,34 @@ export default function LicenseRequired({ email, expiraEm, plano, onRecheck }: L
           <p className="text-sm text-muted-foreground mt-1">
             {expirou
               ? `Seu plano ${plano || ''} venceu em ${dataExpiracao}. Renove para voltar a usar o BrooStock.`
-              : 'Para usar o BrooStock, é preciso uma assinatura ativa.'}
+              : podeTestar
+                ? 'Comece com 7 dias grátis, sem cartão. Depois, escolha um plano para continuar.'
+                : 'Para usar o BrooStock, é preciso uma assinatura ativa.'}
           </p>
           <p className="text-xs text-muted-foreground mt-1">Conta: {email}</p>
         </div>
 
         <div className="space-y-3">
+          {podeTestar && (
+            <div className="rounded-xl border border-green-500/40 bg-green-500/5 p-4">
+              <div className="flex items-center gap-2 text-green-400 font-semibold">
+                <Gift size={18} /> 7 dias grátis
+              </div>
+              <p className="text-sm text-muted-foreground mt-1">
+                Teste o BrooStock completo, sem cartão. Ao final, é só assinar para continuar.
+              </p>
+              <Button
+                type="button"
+                onClick={iniciarTeste}
+                disabled={trialLoading}
+                className="w-full mt-3 h-11 font-semibold bg-green-600 hover:bg-green-600/90 text-white"
+              >
+                {trialLoading ? (<><Loader2 className="h-4 w-4 animate-spin" /> Ativando...</>) : (<>Começar teste grátis <ArrowRight className="h-4 w-4" /></>)}
+              </Button>
+              {trialErro && <p className="text-xs text-red-400 mt-2">{trialErro}</p>}
+            </div>
+          )}
+
           {/* Mensal */}
           <div className="rounded-xl border border-border/50 bg-card/40 backdrop-blur-xl p-4">
             <div className="flex items-baseline justify-between">
