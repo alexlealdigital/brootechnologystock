@@ -34,6 +34,9 @@ export interface LicenseStatus {
   plano: string | null
   expira_em: string | null
   status?: string
+  is_trial?: boolean
+  pode_testar?: boolean
+  dias_restantes?: number
 }
 
 // Consulta o status da licença pelo e-mail. Lança erro em falha de rede/servidor
@@ -49,6 +52,32 @@ export async function fetchLicenseStatus(
     const r = await fetch(url, { signal: ctrl.signal })
     if (!r.ok) throw new Error(`status ${r.status}`)
     return (await r.json()) as LicenseStatus
+  } finally {
+    clearTimeout(t)
+  }
+}
+
+export interface TrialResult {
+  ok: boolean
+  motivo?: string
+  expira_em?: string
+  dias_restantes?: number
+  ativa?: boolean
+}
+
+// Ativa o teste grátis de 7 dias para o e-mail (só funciona se nunca teve licença).
+export async function startTrial(email: string, timeoutMs = 15000): Promise<TrialResult> {
+  const ctrl = new AbortController()
+  const t = setTimeout(() => ctrl.abort(), timeoutMs)
+  try {
+    const r = await fetch(`${BROOSTORE_API}/api/licenca/trial`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+      signal: ctrl.signal,
+    })
+    const data = (await r.json().catch(() => ({}))) as TrialResult
+    return { ok: r.ok && !!data.ok, ...data }
   } finally {
     clearTimeout(t)
   }
