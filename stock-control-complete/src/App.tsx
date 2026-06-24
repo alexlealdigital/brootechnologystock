@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { InventoryProvider } from '@/contexts/InventoryContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { Toaster } from 'sonner'
-import { fetchLicenseStatus } from '@/lib/broostore'
+import { fetchLicenseStatus, buildCheckoutUrl, BROOSTOCK_PLANO_MENSAL_ID, BROOSTOCK_PLANO_ANUAL_ID } from '@/lib/broostore'
 
 import Login from '@/pages/Login'
 import Landing from '@/pages/Landing'
@@ -27,9 +27,12 @@ function Router() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null)
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [license, setLicense] = useState<LicenseState>('idle')
-  const [licenseInfo, setLicenseInfo] = useState<{ expira_em: string | null; plano: string | null }>({
+  const [licenseInfo, setLicenseInfo] = useState<{ expira_em: string | null; plano: string | null; is_trial: boolean; dias_restantes: number; pode_testar: boolean }>({
     expira_em: null,
     plano: null,
+    is_trial: false,
+    dias_restantes: 0,
+    pode_testar: false,
   })
 
   useEffect(() => {
@@ -83,7 +86,13 @@ function Router() {
     setLicense('checking')
     try {
       const s = await fetchLicenseStatus(userEmail)
-      setLicenseInfo({ expira_em: s.expira_em, plano: s.plano })
+      setLicenseInfo({
+        expira_em: s.expira_em,
+        plano: s.plano,
+        is_trial: !!s.is_trial,
+        dias_restantes: s.dias_restantes ?? 0,
+        pode_testar: !!s.pode_testar,
+      })
       setLicense(s.ativa ? 'active' : 'inactive')
     } catch {
       setLicense('error')
@@ -154,6 +163,7 @@ function Router() {
           email={userEmail || ''}
           expiraEm={licenseInfo.expira_em}
           plano={licenseInfo.plano}
+          podeTestar={licenseInfo.pode_testar}
           onRecheck={verificarLicenca}
         />
       )
@@ -162,6 +172,10 @@ function Router() {
   }
 
   return (
+    <>
+      {isAuthenticated && license === 'active' && licenseInfo.is_trial && (
+        <TrialBanner dias={licenseInfo.dias_restantes} email={userEmail || ''} />
+      )}
     <Switch>
       {/* Rotas públicas */}
       <Route path="/" component={Landing} />
@@ -195,6 +209,7 @@ function Router() {
       {/* Rota 404 para rotas não encontradas e não públicas */}
       <Route path="*" component={() => <div className="p-6">Página não encontrada</div>} />
     </Switch>
+    </>
   )
 }
 
@@ -211,3 +226,17 @@ function App() {
 }
 
 export default App
+
+function TrialBanner({ dias, email }: { dias: number; email: string }) {
+  const txt = dias <= 0 ? 'termina hoje' : `${dias} dia${dias > 1 ? 's' : ''} restante${dias > 1 ? 's' : ''}`
+  return (
+    <div className="w-full bg-primary/15 border-b border-primary/30 text-sm px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
+      <span className="text-foreground">🎁 Teste grátis — <strong>{txt}</strong>. Assine para não perder o acesso:</span>
+      <span className="flex items-center gap-2">
+        <a href={buildCheckoutUrl(BROOSTOCK_PLANO_MENSAL_ID, { email })} className="text-primary font-semibold hover:underline">Mensal</a>
+        <span className="text-muted-foreground">·</span>
+        <a href={buildCheckoutUrl(BROOSTOCK_PLANO_ANUAL_ID, { email })} className="text-primary font-semibold hover:underline">Anual</a>
+      </span>
+    </div>
+  )
+}
