@@ -11,6 +11,7 @@ import {
 export default function Landing() {
   const [, navigate] = useLocation()
   const entrar = () => navigate('/login')
+  const comecar = () => navigate('/login?signup=1')
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -28,7 +29,7 @@ export default function Landing() {
           </nav>
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={entrar}>Entrar</Button>
-            <Button size="sm" className="bg-primary text-primary-foreground" onClick={entrar}>Criar conta</Button>
+            <Button size="sm" className="bg-primary text-primary-foreground" onClick={comecar}>Começar grátis</Button>
           </div>
         </div>
       </header>
@@ -50,8 +51,8 @@ export default function Landing() {
               e no celular.
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <Button size="lg" className="h-12 px-6 bg-primary text-primary-foreground font-semibold" onClick={entrar}>
-                Começar agora <ArrowRight size={18} />
+              <Button size="lg" className="h-12 px-6 bg-primary text-primary-foreground font-semibold" onClick={comecar}>
+                Comece grátis — 7 dias <ArrowRight size={18} />
               </Button>
               <Button size="lg" variant="outline" className="h-12 px-6 border-border" onClick={entrar}>
                 Já tenho conta
@@ -170,8 +171,8 @@ export default function Landing() {
           <p className="mt-3 text-muted-foreground max-w-lg mx-auto">
             Crie sua conta agora e comece a enxergar estoque e resultado do seu negócio com clareza.
           </p>
-          <Button size="lg" className="mt-7 h-12 px-8 bg-primary text-primary-foreground font-semibold" onClick={entrar}>
-            Criar minha conta <ArrowRight size={18} />
+          <Button size="lg" className="mt-7 h-12 px-8 bg-primary text-primary-foreground font-semibold" onClick={comecar}>
+            Comece grátis — 7 dias <ArrowRight size={18} />
           </Button>
         </div>
       </section>
