@@ -1,10 +1,10 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLocation } from 'wouter'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
-import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2, CheckCircle2, Check, Sparkles } from 'lucide-react'
+import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2, CheckCircle2, Check, Sparkles, Gift } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   buildCheckoutUrl,
@@ -18,6 +18,11 @@ import {
 export default function Login() {
   const [, navigate] = useLocation()
   const [isLogin, setIsLogin] = useState(true)
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('signup') === '1') setIsLogin(false)
+  }, [])
   const [isForgotPassword, setIsForgotPassword] = useState(false)
   const [isSignUpConfirmation, setIsSignUpConfirmation] = useState(false)
   const [signUpEmail, setSignUpEmail] = useState('')
@@ -201,6 +206,12 @@ export default function Login() {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            {!isLogin && !isForgotPassword && (
+              <div className="mb-4 rounded-lg border border-green-500/40 bg-green-500/10 p-3 flex items-center gap-2 text-sm">
+                <Gift size={18} className="text-green-400 shrink-0" />
+                <span className="text-foreground/90">🎁 Comece com <strong>7 dias grátis</strong> — sem cartão. Crie sua conta e já entre usando.</span>
+              </div>
+            )}
             <form onSubmit={handleSubmit} className="space-y-4">
               {!isLogin && !isForgotPassword && (
                 <div className="space-y-2">
