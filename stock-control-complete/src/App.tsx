@@ -4,7 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { InventoryProvider } from '@/contexts/InventoryContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { Toaster } from 'sonner'
-import { fetchLicenseStatus, buildCheckoutUrl, BROOSTOCK_PLANO_MENSAL_ID, BROOSTOCK_PLANO_ANUAL_ID } from '@/lib/broostore'
+import { fetchLicenseStatus, startTrial, buildCheckoutUrl, BROOSTOCK_PLANO_MENSAL_ID, BROOSTOCK_PLANO_ANUAL_ID } from '@/lib/broostore'
 
 import Login from '@/pages/Login'
 import Landing from '@/pages/Landing'
@@ -20,7 +20,7 @@ import LicenseRequired from '@/pages/LicenseRequired'
 // Rotas públicas — acessíveis sem autenticação e sem checagem de licença
 const PUBLIC_ROUTES = ['/', '/login', '/reset-password', '/loja']
 
-type LicenseState = 'idle' | 'checking' | 'active' | 'inactive' | 'error'
+type LicenseState = 'idle' | 'checking' | 'activating' | 'active' | 'inactive' | 'error'
 
 function Router() {
   const [location, navigate] = useLocation()
@@ -85,7 +85,15 @@ function Router() {
     if (!userEmail) return
     setLicense('checking')
     try {
-      const s = await fetchLicenseStatus(userEmail)
+      let s = await fetchLicenseStatus(userEmail)
+      // Primeiro acesso, nunca teve licença -> ativa os 7 dias grátis automaticamente
+      if (!s.ativa && s.pode_testar) {
+        setLicense('activating')
+        const tr = await startTrial(userEmail)
+        if (tr.ok || tr.ativa) {
+          s = await fetchLicenseStatus(userEmail)
+        }
+      }
       setLicenseInfo({
         expira_em: s.expira_em,
         plano: s.plano,
@@ -121,12 +129,14 @@ function Router() {
   // ===== Gate de licença (apenas em rotas protegidas com usuário logado) =====
   const isPublic = PUBLIC_ROUTES.includes(location)
   if (isAuthenticated && !isPublic) {
-    if (license === 'idle' || license === 'checking') {
+    if (license === 'idle' || license === 'checking' || license === 'activating') {
       return (
         <div className="min-h-screen flex items-center justify-center bg-background">
           <div className="flex flex-col items-center gap-2">
             <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-            <p className="text-muted-foreground animate-pulse">Verificando licença...</p>
+            <p className="text-muted-foreground animate-pulse">
+              {license === 'activating' ? 'Ativando seu teste grátis de 7 dias...' : 'Verificando licença...'}
+            </p>
           </div>
         </div>
       )
