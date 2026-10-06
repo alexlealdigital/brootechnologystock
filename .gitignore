@@ -1,0 +1,25 @@
+# Dependências
+node_modules/
+
+# Build
+dist/
+stock-control-complete/dev-dist/
+
+# Variáveis de ambiente (nunca commitar segredos/URLs reais)
+.env
+.env.local
+.env.*.local
+
+# Editor / SO
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+*.local
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# PWA (gerado no build)
+dev-dist
