@@ -1,8 +1,14 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
+<<<<<<< HEAD
 import { Mail, MessageSquare, Trash2, Eye, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AppShell } from '@/components/AppShell'
+=======
+import { Button } from '@/components/ui/Button'
+import { Mail, MessageSquare, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 
 interface Contact {
   id: string
@@ -28,6 +34,7 @@ export default function ContactsPanel() {
     fetchContacts()
   }, [])
 
+<<<<<<< HEAD
   // Sempre filtrado pelo usuário logado — mesmo com RLS habilitada no banco
   // como segunda camada, aqui evitamos depender só dela: sem esse .eq, um
   // erro de configuração de RLS exporia os leads de outras contas.
@@ -43,6 +50,14 @@ export default function ContactsPanel() {
         .from('contacts')
         .select('*, products(name)')
         .eq('user_id', user.id)
+=======
+  const fetchContacts = async () => {
+    try {
+      setIsLoading(true)
+      const { data, error } = await supabase
+        .from('contacts')
+        .select('*, products(name)')
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
         .order('created_at', { ascending: false })
 
       if (error) throw error
@@ -57,12 +72,18 @@ export default function ContactsPanel() {
 
   const handleMarkAsRead = async (contactId: string) => {
     try {
+<<<<<<< HEAD
       const { data: { user } } = await supabase.auth.getUser()
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
       const { error } = await supabase
         .from('contacts')
         .update({ status: 'read' })
         .eq('id', contactId)
+<<<<<<< HEAD
         .eq('user_id', user?.id)
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 
       if (error) throw error
       await fetchContacts()
@@ -75,12 +96,18 @@ export default function ContactsPanel() {
 
   const handleMarkAsReplied = async (contactId: string) => {
     try {
+<<<<<<< HEAD
       const { data: { user } } = await supabase.auth.getUser()
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
       const { error } = await supabase
         .from('contacts')
         .update({ status: 'replied' })
         .eq('id', contactId)
+<<<<<<< HEAD
         .eq('user_id', user?.id)
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 
       if (error) throw error
       await fetchContacts()
@@ -95,12 +122,18 @@ export default function ContactsPanel() {
     if (!confirm('Tem certeza que deseja deletar este contato?')) return
 
     try {
+<<<<<<< HEAD
       const { data: { user } } = await supabase.auth.getUser()
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
       const { error } = await supabase
         .from('contacts')
         .delete()
         .eq('id', contactId)
+<<<<<<< HEAD
         .eq('user_id', user?.id)
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 
       if (error) throw error
       await fetchContacts()
@@ -134,8 +167,18 @@ export default function ContactsPanel() {
   }
 
   return (
+<<<<<<< HEAD
     <AppShell title="Contatos da Loja">
     <div className="space-y-6">
+=======
+    <div className="space-y-6">
+      {/* Header */}
+      <div>
+        <h2 className="text-2xl font-semibold mb-2">Contatos da Loja</h2>
+        <p className="text-gray-600">Gerencie as mensagens dos clientes interessados</p>
+      </div>
+
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
       {/* Stats */}
       <div className="grid grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-lg border">
@@ -337,6 +380,9 @@ export default function ContactsPanel() {
         )}
       </div>
     </div>
+<<<<<<< HEAD
     </AppShell>
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   )
 }

@@ -27,7 +27,10 @@ interface InventoryContextType {
   deleteCategory: (id: string) => Promise<void>
   uploadImage: (file: File) => Promise<string>
   getStats: () => Promise<any>
+<<<<<<< HEAD
   refetch: () => Promise<void>
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 }
 
 const InventoryContext = createContext<InventoryContextType | undefined>(undefined)

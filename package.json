@@ -8,8 +8,13 @@
     "dev": "vite --host",
     "build": "vite build",
     "preview": "vite preview --host",
+<<<<<<< HEAD
     "lint": "eslint stock-control-complete/src --ext ts,tsx --report-unused-disable-directives",
     "type-check": "tsc -p . --noEmit"
+=======
+    "lint": "eslint src --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "type-check": "tsc --noEmit"
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.4",
@@ -34,6 +39,7 @@
     "zod": "^3.22.4"
   },
   "devDependencies": {
+<<<<<<< HEAD
     "@types/react": "^18.2.66",
     "@types/react-dom": "^18.2.22",
     "@vitejs/plugin-react": "^4.2.1",
@@ -51,6 +57,30 @@
     "vite": "^5.2.0",
     "vite-plugin-pwa": "^0.21.1"
   },
+=======
+    "@types/react": "^18.2.37",
+    "@types/react-dom": "^18.2.15",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.16",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "terser": "^5.46.1",
+    "typescript": "^5.2.2",
+    "vite": "^5.0.8"
+  },
+    "devDependencies": {
+    "@types/react": "^18.2.66",
+    "@types/react-dom": "^18.2.22",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3",
+    "typescript": "^5.2.2",
+    "vite": "^5.2.0",
+    "vite-plugin-pwa": "^0.21.1" 
+  },
+
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   "engines": {
     "node": ">=18.0.0"
   }

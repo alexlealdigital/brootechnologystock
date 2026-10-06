@@ -1,9 +1,22 @@
 import { useEffect, useState } from 'react'
+<<<<<<< HEAD
 import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Card } from '@/components/ui/Card'
 import { AppShell } from '@/components/AppShell'
 
 export default function Reports() {
+=======
+import { useLocation } from 'wouter'
+import { supabase } from '@/lib/supabase'
+import { useInventoryContext } from '@/contexts/InventoryContext'
+import { Button } from '@/components/ui/Button'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
+import { ArrowLeft } from 'lucide-react'
+import { AppShell } from '@/components/AppShell'
+
+export default function Reports() {
+  const [, navigate] = useLocation()
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   const { products, isLoaded } = useInventoryContext()
   const [lowStock, setLowStock] = useState<any[]>([])
   const [overstocked, setOverstocked] = useState<any[]>([])

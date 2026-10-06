@@ -1,13 +1,8 @@
 import { useState, useRef } from 'react'
-<<<<<<< HEAD
-=======
-import { useLocation } from 'wouter'
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
-<<<<<<< HEAD
 import { Plus, X, Pen, Trash2, Tag, Image as ImageIcon, Barcode, Box, Upload, Loader2 } from 'lucide-react'
 import { Footer } from '@/components/ui/Footer'
 import { AppShell } from '@/components/AppShell'
@@ -17,21 +12,6 @@ import { toast } from 'sonner'
 export default function Products() {
   const { products, categories, addProduct, updateProduct, deleteProduct, uploadImage, addCategory, deleteCategory, isLoaded, refetch } = useInventoryContext()
 
-=======
-import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Tag, Image as ImageIcon, Barcode, Box, Upload, Loader2, Settings, LogOut } from 'lucide-react'
-import { Footer } from '@/components/ui/Footer'
-import { supabase } from '@/lib/supabase'
-import { AppShell } from '@/components/AppShell'
-
-export default function Products() {
-  const [, navigate] = useLocation()
-  const { products, categories, addProduct, updateProduct, deleteProduct, uploadImage, addCategory, deleteCategory, isLoaded } = useInventoryContext()
-
-  const handleLogout = async () => {
-    await supabase.auth.signOut()
-    navigate('/login')
-  }
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   const [showModal, setShowModal] = useState(false)
   const [showCatModal, setShowCatModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -44,6 +24,24 @@ export default function Products() {
   })
   const [newCatName, setNewCatName] = useState('')
   const [tagInput, setTagInput] = useState('')
+
+  // Produto com movimentacoes nao pode ser apagado (FK movements -> products
+  // com ON DELETE RESTRICT, ver SUPABASE_CORRECOES_3.sql): apagar levaria o
+  // historico de vendas junto. Mostra um aviso claro em vez de falhar calado.
+  const handleDeleteProduct = async (id: string) => {
+    if (!window.confirm('Excluir este produto? Esta ação não pode ser desfeita.')) return
+    try {
+      await deleteProduct(id)
+      toast.success('Produto excluído.')
+    } catch (err: any) {
+      const msg = String(err?.message || '')
+      if (err?.code === '23503' || msg.includes('violates foreign key')) {
+        toast.error('Este produto tem movimentações ou pedidos e não pode ser excluído. Zere o estoque e tire-o da loja.')
+      } else {
+        toast.error('Não foi possível excluir o produto.')
+      }
+    }
+  }
 
   const handleOpenModal = (product?: any) => {
     if (product) {
@@ -72,11 +70,7 @@ export default function Products() {
       const publicUrl = await uploadImage(file)
       setFormData(prev => ({ ...prev, image_url: publicUrl }))
     } catch (err) {
-<<<<<<< HEAD
       toast.error(err instanceof Error ? err.message : 'Erro ao carregar imagem.')
-=======
-      alert('Erro ao carregar imagem.')
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
     } finally {
       setIsUploading(false)
     }
@@ -146,18 +140,12 @@ export default function Products() {
                   <p className="text-xl font-bold">R$ {p.unit_price.toFixed(2)}</p>
                 </div>
               </div>
-<<<<<<< HEAD
               <div className="flex items-center justify-between gap-2 mt-4">
                 <PublishButton product={p} onSuccess={refetch} />
                 <div className="flex gap-2">
                   <button onClick={() => handleOpenModal(p)} className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"><Pen size={16} /></button>
-                  <button onClick={() => deleteProduct(p.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors"><Trash2 size={16} /></button>
+                  <button onClick={() => handleDeleteProduct(p.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors"><Trash2 size={16} /></button>
                 </div>
-=======
-              <div className="flex justify-end gap-2 mt-4">
-                <button onClick={() => handleOpenModal(p)} className="p-1.5 text-primary hover:bg-primary/10 rounded transition-colors"><Pen size={16} /></button>
-                <button onClick={() => deleteProduct(p.id)} className="p-1.5 text-destructive hover:bg-destructive/10 rounded transition-colors"><Trash2 size={16} /></button>
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
               </div>
             </Card>
           ))}

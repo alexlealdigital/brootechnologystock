@@ -32,12 +32,19 @@ npm install
 Crie um arquivo `.env.local` na raiz do projeto:
 
 ```env
+<<<<<<< HEAD
 VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 VITE_SUPABASE_ANON_KEY=SUA_CHAVE_ANON_AQUI
 ```
 
 > Use o arquivo `.env.example` como ponto de partida (`cp .env.example .env.local`) e preencha com as credenciais do seu próprio projeto Supabase, em **Project Settings → API**. Nunca cole a chave real neste README nem em qualquer arquivo versionado — mesmo sendo a chave pública (`anon`), ela deve vir só do `.env.local` (ignorado pelo Git) ou das variáveis de ambiente do Netlify.
 
+=======
+VITE_SUPABASE_URL=https://vmadrbcnwsjzpegcfcoi.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZtYWRyYmNud3NqenBlZ2NmY29pIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzU2ODI2MzgsImV4cCI6MjA5MTI1ODYzOH0.getUUvxdxmApfoNEapbFO-jfEtNB1EhxUyUDsQKhCMg
+```
+
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 ### 4. Executar em Desenvolvimento
 
 ```bash
@@ -124,8 +131,13 @@ O projeto usa **Supabase** com as seguintes tabelas:
 No painel do Netlify, vá para **Settings → Environment** e adicione:
 
 ```
+<<<<<<< HEAD
 VITE_SUPABASE_URL=https://SEU-PROJETO.supabase.co
 VITE_SUPABASE_ANON_KEY=SUA_CHAVE_ANON_AQUI
+=======
+VITE_SUPABASE_URL=https://vmadrbcnwsjzpegcfcoi.supabase.co
+VITE_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 ```
 
 ### 4. Deploy

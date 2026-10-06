@@ -2,7 +2,11 @@ import { useLocation } from 'wouter'
 import { Button } from '@/components/ui/Button'
 import {
   Wallet, TrendingUp, BarChart3, Package, AlertTriangle, Smartphone,
+<<<<<<< HEAD
   Store, ArrowRight, Check, ShieldCheck, Zap, Receipt, Tag, ArrowDownLeft, ArrowUpRight,
+=======
+  Store, Users, ArrowRight, Check, ShieldCheck, Zap, Receipt, Tag, ArrowDownLeft, ArrowUpRight,
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 } from 'lucide-react'
 import {
   PLANO_MENSAL_PRECO_LABEL, PLANO_ANUAL_TOTAL_LABEL, PLANO_ANUAL_MENSAL_LABEL,

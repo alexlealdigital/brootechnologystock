@@ -1,4 +1,8 @@
 import { useState, useEffect } from 'react'
+<<<<<<< HEAD
+=======
+import { useLocation } from 'wouter'
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -15,6 +19,10 @@ import {
 } from '@/lib/broostore'
 
 export default function Login() {
+<<<<<<< HEAD
+=======
+  const [, navigate] = useLocation()
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   const [isLogin, setIsLogin] = useState(true)
 
   useEffect(() => {

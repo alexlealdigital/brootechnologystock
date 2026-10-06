@@ -16,6 +16,7 @@ import Movements from '@/pages/Movements'
 import Reports from '@/pages/Reports'
 import StoreCatalog from '@/pages/StoreCatalog'
 import LicenseRequired from '@/pages/LicenseRequired'
+<<<<<<< HEAD
 import ContactsPanel from '@/components/ContactsPanel'
 
 // Rotas públicas — acessíveis sem autenticação e sem checagem de licença.
@@ -23,6 +24,11 @@ import ContactsPanel from '@/components/ContactsPanel'
 // cada vendedor), por isso usamos startsWith em vez de igualdade exata.
 const PUBLIC_ROUTES = ['/', '/login', '/reset-password']
 const isPublicPath = (path: string) => PUBLIC_ROUTES.includes(path) || path.startsWith('/loja')
+=======
+
+// Rotas públicas — acessíveis sem autenticação e sem checagem de licença
+const PUBLIC_ROUTES = ['/', '/login', '/reset-password', '/loja']
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 
 type LicenseState = 'idle' | 'checking' | 'activating' | 'active' | 'inactive' | 'error'
 
@@ -46,7 +52,11 @@ function Router() {
       setIsAuthenticated(hasUser)
       setUserEmail(session?.user?.email ?? null)
 
+<<<<<<< HEAD
       const isPublicRoute = isPublicPath(location)
+=======
+      const isPublicRoute = PUBLIC_ROUTES.includes(location)
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 
       if (!hasUser && !isPublicRoute) {
         navigate('/login')
@@ -74,7 +84,11 @@ function Router() {
       } else if (event === 'SIGNED_OUT') {
         setLicense('idle')
         navigate('/login')
+<<<<<<< HEAD
       } else if (!hasUser && !isPublicPath(location)) {
+=======
+      } else if (!hasUser && !PUBLIC_ROUTES.includes(location)) {
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
         navigate('/login')
       }
     })
@@ -112,14 +126,22 @@ function Router() {
   }, [userEmail])
 
   useEffect(() => {
+<<<<<<< HEAD
     const isPublic = isPublicPath(location)
+=======
+    const isPublic = PUBLIC_ROUTES.includes(location)
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
     if (isAuthenticated && !isPublic && userEmail && license === 'idle') {
       verificarLicenca()
     }
   }, [isAuthenticated, userEmail, location, license, verificarLicenca])
 
   // Tela de transição enquanto verifica a sessão inicial
+<<<<<<< HEAD
   if (isAuthenticated === null && !isPublicPath(location)) {
+=======
+  if (isAuthenticated === null && !PUBLIC_ROUTES.includes(location)) {
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-2">
@@ -131,7 +153,11 @@ function Router() {
   }
 
   // ===== Gate de licença (apenas em rotas protegidas com usuário logado) =====
+<<<<<<< HEAD
   const isPublic = isPublicPath(location)
+=======
+  const isPublic = PUBLIC_ROUTES.includes(location)
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   if (isAuthenticated && !isPublic) {
     if (license === 'idle' || license === 'checking' || license === 'activating') {
       return (
@@ -195,7 +221,10 @@ function Router() {
       <Route path="/" component={Landing} />
       <Route path="/login" component={Login} />
       <Route path="/reset-password" component={ResetPassword} />
+<<<<<<< HEAD
       <Route path="/loja/:sellerId" component={StoreCatalog} />
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
       <Route path="/loja" component={StoreCatalog} />
 
       {/* Rotas protegidas */}
@@ -205,11 +234,28 @@ function Router() {
           <Route path="/products" component={Products} />
           <Route path="/movements" component={Movements} />
           <Route path="/reports" component={Reports} />
+<<<<<<< HEAD
           <Route path="/contacts" component={ContactsPanel} />
           <Route path="/como-usar" component={ComoUsar} />
         </>
       ) : (
         <Route path="*" component={RedirectToLogin} />
+=======
+          <Route path="/como-usar" component={ComoUsar} />
+        </>
+      ) : (
+        <Route
+          path="*"
+          component={() => {
+            useEffect(() => {
+              if (!PUBLIC_ROUTES.includes(location)) {
+                navigate('/login')
+              }
+            }, [location, navigate])
+            return null
+          }}
+        />
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
       )}
 
       {/* Rota 404 para rotas não encontradas e não públicas */}
@@ -219,6 +265,7 @@ function Router() {
   )
 }
 
+<<<<<<< HEAD
 // Componente próprio (em vez de uma arrow function inline dentro do JSX)
 // para que o useEffect respeite as regras de Hooks do React/ESLint.
 function RedirectToLogin() {
@@ -231,6 +278,8 @@ function RedirectToLogin() {
   return null
 }
 
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 function App() {
   return (
     <ThemeProvider>

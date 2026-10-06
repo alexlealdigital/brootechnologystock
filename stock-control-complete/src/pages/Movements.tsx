@@ -1,8 +1,13 @@
 import { useState } from 'react'
+<<<<<<< HEAD
+=======
+import { useLocation } from 'wouter'
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 import { useInventoryContext } from '@/contexts/InventoryContext'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
+<<<<<<< HEAD
 import { Plus, X, Pen, Trash2, Users, ShoppingBag, Image as ImageIcon } from 'lucide-react'
 import { Footer } from '@/components/ui/Footer'
 import { AppShell } from '@/components/AppShell'
@@ -10,6 +15,21 @@ import { AppShell } from '@/components/AppShell'
 export default function Movements() {
   const { products, movements, entities, channels, addMovement, updateMovement, deleteMovement, isLoaded } = useInventoryContext()
 
+=======
+import { Plus, X, ArrowLeft, Pen, Trash2, ShieldCheck, Users, ShoppingBag, Image as ImageIcon, LogOut } from 'lucide-react'
+import { Footer } from '@/components/ui/Footer'
+import { supabase } from '@/lib/supabase'
+import { AppShell } from '@/components/AppShell'
+
+export default function Movements() {
+  const [, navigate] = useLocation()
+  const { products, movements, entities, channels, addMovement, updateMovement, deleteMovement, isLoaded } = useInventoryContext()
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut()
+    navigate('/login')
+  }
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   const [showModal, setShowModal] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
   const [formData, setFormData] = useState({

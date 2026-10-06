@@ -77,10 +77,14 @@ export async function startTrial(email: string, timeoutMs = 15000): Promise<Tria
       signal: ctrl.signal,
     })
     const data = (await r.json().catch(() => ({}))) as TrialResult
+<<<<<<< HEAD
     // Importante: "ok" precisa vir DEPOIS do spread de "data", senão um
     // data.ok vindo do servidor sobrescreve silenciosamente o resultado
     // calculado aqui (bug encontrado em auditoria: a ordem estava invertida).
     return { ...data, ok: r.ok && !!data.ok }
+=======
+    return { ok: r.ok && !!data.ok, ...data }
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   } finally {
     clearTimeout(t)
   }

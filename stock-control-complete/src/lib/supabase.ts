@@ -20,6 +20,7 @@ export type Product = {
   max_quantity: number
   unit_price: number
   cost_price: number
+<<<<<<< HEAD
   barcode?: string
   unit?: string
   image_url?: string
@@ -35,6 +36,10 @@ export type Product = {
   site_order?: number
   sale_price?: number
   published_at?: string | null
+=======
+  created_at: string
+  updated_at: string
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 }
 
 export type Movement = {
@@ -50,8 +55,11 @@ export type Movement = {
   fee_amount?: number
   sale_price?: number
   notes?: string
+<<<<<<< HEAD
   entity_id?: string | null
   channel_id?: string | null
+=======
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   date: string
   created_at: string
 }

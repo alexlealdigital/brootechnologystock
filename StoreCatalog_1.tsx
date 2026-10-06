@@ -2,13 +2,8 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-<<<<<<< HEAD
 import { MessageCircle, Mail, Search, ArrowLeft, Store } from 'lucide-react'
 import { useLocation, useParams } from 'wouter'
-=======
-import { MessageCircle, Mail, Search, ArrowLeft } from 'lucide-react'
-import { useLocation } from 'wouter'
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 import { toast } from 'sonner'
 
 interface Product {
@@ -23,16 +18,22 @@ interface Product {
   category?: string
 }
 
+// A vitrine publica le da VIEW public_products (SUPABASE_CORRECOES_3.sql), que
+// so expõe produtos publicados e so estas colunas. Nunca leia a tabela
+// products direto aqui: cost_price, quantity, barcode etc. sao dados internos
+// do vendedor e nao devem sair para o publico.
+const PUBLIC_PRODUCT_COLUMNS =
+  'id,user_id,name,sku,category,image_url,tags,unit,unit_price,sale_price,' +
+  'site_title,site_description,site_slug,site_order,is_published,' +
+  'is_visible_on_site,published_at'
+
 export default function StoreCatalog() {
   const [, navigate] = useLocation()
-<<<<<<< HEAD
   // A loja é por vendedor: /loja/:sellerId. Sem esse id, cada usuário do
   // BrooStock veria os produtos publicados de TODOS os outros usuários
   // misturados na mesma vitrine — por isso a query abaixo sempre filtra
   // por sellerId, nunca busca a tabela products inteira.
   const { sellerId } = useParams<{ sellerId?: string }>()
-=======
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   const [products, setProducts] = useState<Product[]>([])
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([])
   const [searchTerm, setSearchTerm] = useState('')
@@ -42,7 +43,6 @@ export default function StoreCatalog() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [showContactModal, setShowContactModal] = useState(false)
 
-<<<<<<< HEAD
   // Carregar produtos publicados — só os do vendedor (sellerId) desta loja
   useEffect(() => {
     if (!sellerId) {
@@ -50,31 +50,27 @@ export default function StoreCatalog() {
       return
     }
 
-=======
-  // Carregar produtos publicados
-  useEffect(() => {
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
     const fetchProducts = async () => {
       try {
         setIsLoading(true)
         const { data, error } = await supabase
-          .from('products')
-          .select('*')
-<<<<<<< HEAD
+          .from('public_products')
+          .select(PUBLIC_PRODUCT_COLUMNS)
           .eq('user_id', sellerId)
-=======
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
           .eq('is_published', true)
           .eq('is_visible_on_site', true)
           .order('site_order', { ascending: true })
 
         if (error) throw error
 
-        setProducts(data || [])
+        // select() com lista de colunas montada em constante perde a
+        // tipagem do supabase-js, entao tipamos o retorno explicitamente.
+        const rows = (data ?? []) as unknown as Product[]
+        setProducts(rows)
 
         // Extrair categorias únicas
         const uniqueCategories = Array.from(
-          new Set((data || []).map(p => p.category).filter(Boolean))
+          new Set(rows.map(p => p.category).filter(Boolean))
         ) as string[]
         setCategories(uniqueCategories)
       } catch (err) {
@@ -86,11 +82,7 @@ export default function StoreCatalog() {
     }
 
     fetchProducts()
-<<<<<<< HEAD
   }, [sellerId])
-=======
-  }, [])
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
 
   // Filtrar produtos
   useEffect(() => {
@@ -124,7 +116,6 @@ export default function StoreCatalog() {
     setShowContactModal(true)
   }
 
-<<<<<<< HEAD
   if (!sellerId) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
@@ -142,8 +133,6 @@ export default function StoreCatalog() {
     )
   }
 
-=======
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -337,7 +326,6 @@ function ContactModal({
     try {
       setIsSubmitting(true)
 
-<<<<<<< HEAD
       // Importante: NÃO enviamos user_id aqui. Antes, este código usava a
       // sessão de quem estava visitando a loja (ou um UUID zerado) — ou
       // seja, o lead nunca chegava na conta do vendedor dono do produto.
@@ -346,15 +334,6 @@ function ContactModal({
       // formulário funciona igual para visitante anônimo ou logado.
       const { error } = await supabase.from('contacts').insert([
         {
-=======
-      // Obter user_id do usuário autenticado (ou usar um valor padrão para contatos públicos)
-      const { data: session } = await supabase.auth.getSession()
-      const userId = session?.session?.user?.id || '00000000-0000-0000-0000-000000000000'
-
-      const { error } = await supabase.from('contacts').insert([
-        {
-          user_id: userId,
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
           name: formData.name,
           email: formData.email,
           phone: formData.phone,

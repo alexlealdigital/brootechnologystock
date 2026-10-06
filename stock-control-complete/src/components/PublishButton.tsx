@@ -219,6 +219,7 @@ export default function PublishButton({ product, onSuccess }: PublishButtonProps
                     {product.sale_price?.toFixed(2).replace('.', ',')}
                   </p>
                   <p>
+<<<<<<< HEAD
                     <strong>Link da sua loja:</strong>{' '}
                     <code className="bg-gray-100 px-2 py-1 rounded text-xs break-all">
                       {window.location.origin}/loja/{product.user_id}
@@ -227,6 +228,13 @@ export default function PublishButton({ product, onSuccess }: PublishButtonProps
                   <p className="text-xs text-gray-500">
                     Esse link mostra todos os seus produtos publicados. Compartilhe o mesmo link para todos eles.
                   </p>
+=======
+                    <strong>URL:</strong>{' '}
+                    <code className="bg-gray-100 px-2 py-1 rounded text-xs">
+                      /loja/{product.site_slug}
+                    </code>
+                  </p>
+>>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
                 </div>
 
                 <div className="flex gap-3">
