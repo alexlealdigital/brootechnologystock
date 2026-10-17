@@ -75,7 +75,6 @@ export function useInventory() {
   }, [fetchData])
 
   const uploadImage = async (file: File) => {
-<<<<<<< HEAD
     if (!currentUserId) throw new Error('Usuário não autenticado')
     const fileExt = file.name.split('.').pop()
     const fileName = `${currentUserId}/${Math.random()}.${fileExt}`
@@ -83,17 +82,6 @@ export function useInventory() {
     if (uploadError) throw uploadError
     const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName)
     return publicUrl
-=======
-    try {
-      if (!currentUserId) throw new Error('Usuário não autenticado')
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${currentUserId}/${Math.random()}.${fileExt}`
-      const { error: uploadError } = await supabase.storage.from('product-images').upload(fileName, file)
-      if (uploadError) throw uploadError
-      const { data: { publicUrl } } = supabase.storage.from('product-images').getPublicUrl(fileName)
-      return publicUrl
-    } catch (err) { throw err }
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   }
 
   // --- CRUD FUNCTIONS ---
@@ -233,7 +221,6 @@ export function useInventory() {
     return { totalProducts: products.length, totalQuantity: products.reduce((sum, p) => sum + p.quantity, 0), lowStock: lowStockProducts.length, lowStockList: lowStockProducts, inventoryValue, totalRevenue, totalFees, totalProfit, ticketMedio, topProductsByProfit }
   }, [products, movements])
 
-<<<<<<< HEAD
   // Permite forçar um recarregamento manual — usado por componentes que
   // gravam direto no Supabase sem passar pelas funções CRUD acima (ex.:
   // PublishButton), para refletir a mudança na tela sem esperar outra ação.
@@ -246,11 +233,5 @@ export function useInventory() {
     addProduct, updateProduct, deleteProduct, addMovement, updateMovement, deleteMovement,
     updatePaymentSettings, uploadImage, getStats, addCategory, deleteCategory, addEntity, deleteEntity, addChannel, deleteChannel,
     refetch,
-=======
-  return { 
-    products, movements, paymentSettings, entities, channels, categories, isLoaded, isLoading, error,
-    addProduct, updateProduct, deleteProduct, addMovement, updateMovement, deleteMovement,
-    updatePaymentSettings, uploadImage, getStats, addCategory, deleteCategory, addEntity, deleteEntity, addChannel, deleteChannel
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   }
 }

@@ -22,7 +22,6 @@
     "noUnusedParameters": true,
     "noFallthroughCasesInSwitch": true,
 
-<<<<<<< HEAD
     /* Types */
     "types": ["vite/client"],
 
@@ -33,14 +32,5 @@
     }
   },
   "include": ["stock-control-complete/src"],
-=======
-    /* Path mapping */
-    "baseUrl": ".",
-    "paths": {
-      "@/*": ["./src/*"]
-    }
-  },
-  "include": ["src"],
->>>>>>> e873e19377cf9bf6be17bf3d67869563eb8207cf
   "references": [{ "path": "./tsconfig.node.json" }]
 }
