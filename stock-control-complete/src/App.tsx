@@ -190,6 +190,9 @@ function Router() {
       {isAuthenticated && license === 'active' && licenseInfo.is_trial && (
         <TrialBanner dias={licenseInfo.dias_restantes} email={userEmail || ''} />
       )}
+      {isAuthenticated && license === 'active' && !licenseInfo.is_trial && licenseInfo.dias_restantes <= AVISO_VENCIMENTO_DIAS && (
+        <RenewalBanner dias={licenseInfo.dias_restantes} expiraEm={licenseInfo.expira_em} email={userEmail || ''} />
+      )}
     <Switch>
       {/* Rotas públicas */}
       <Route path="/" component={Landing} />
@@ -254,6 +257,37 @@ function TrialBanner({ dias, email }: { dias: number; email: string }) {
         <a href={buildCheckoutUrl(BROOSTOCK_PLANO_MENSAL_ID, { email })} className="text-primary font-semibold hover:underline">Mensal</a>
         <span className="text-muted-foreground">·</span>
         <a href={buildCheckoutUrl(BROOSTOCK_PLANO_ANUAL_ID, { email })} className="text-primary font-semibold hover:underline">Anual</a>
+      </span>
+    </div>
+  )
+}
+
+// Assinatura paga perto de vencer: avisa dentro do app (não depende de e-mail).
+// Quando vence de fato, o gate de licença mostra a tela "Sua licença expirou".
+const AVISO_VENCIMENTO_DIAS = 7
+
+function RenewalBanner({ dias, expiraEm, email }: { dias: number; expiraEm: string | null; email: string }) {
+  const chave = `renovacao_aviso_${expiraEm || ''}`
+  const [oculto, setOculto] = useState(() => {
+    try { return sessionStorage.getItem(chave) === '1' } catch { return false }
+  })
+  if (oculto) return null
+  const txt = dias <= 0 ? 'vence hoje' : `vence em ${dias} dia${dias > 1 ? 's' : ''}`
+  const data = expiraEm ? new Date(expiraEm).toLocaleDateString('pt-BR') : null
+  const fechar = () => {
+    setOculto(true)
+    try { sessionStorage.setItem(chave, '1') } catch { /* sem storage: só some até recarregar */ }
+  }
+  return (
+    <div className="w-full bg-amber-500/15 border-b border-amber-500/30 text-sm px-4 py-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 text-center">
+      <span className="text-foreground">
+        ⏳ Sua assinatura <strong>{txt}</strong>{data ? ` (${data})` : ''}. Renove para não perder o acesso:
+      </span>
+      <span className="flex items-center gap-2">
+        <a href={buildCheckoutUrl(BROOSTOCK_PLANO_MENSAL_ID, { email })} className="text-primary font-semibold hover:underline">Mensal</a>
+        <span className="text-muted-foreground">·</span>
+        <a href={buildCheckoutUrl(BROOSTOCK_PLANO_ANUAL_ID, { email })} className="text-primary font-semibold hover:underline">Anual</a>
+        <button type="button" onClick={fechar} aria-label="Fechar aviso" className="ml-2 text-muted-foreground hover:text-foreground">✕</button>
       </span>
     </div>
   )
