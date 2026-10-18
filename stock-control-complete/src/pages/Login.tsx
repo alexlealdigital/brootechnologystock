@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { ShieldCheck, Mail, Lock, User, ArrowRight, Loader2, CheckCircle2, Check, Sparkles, Gift } from 'lucide-react'
 import { toast } from 'sonner'
@@ -259,8 +260,7 @@ export default function Login() {
                       </button>
                     )}
                   </div>
-                  <Input
-                    type="password"
+                  <PasswordInput
                     placeholder="••••••••"
                     autoComplete={isLogin ? 'current-password' : 'new-password'}
                     value={formData.password}
@@ -276,8 +276,7 @@ export default function Login() {
                   <label className="text-sm font-medium text-foreground/80 flex items-center gap-2">
                     <Lock size={14} /> Confirmar Senha
                   </label>
-                  <Input
-                    type="password"
+                  <PasswordInput
                     placeholder="••••••••"
                     autoComplete="new-password"
                     value={formData.confirmPassword}

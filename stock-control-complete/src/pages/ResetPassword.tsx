@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { useLocation } from 'wouter'
 import { supabase } from '@/lib/supabase'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
+import { PasswordInput } from '@/components/ui/PasswordInput'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/Card'
 import { ShieldCheck, Lock, ArrowRight, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import { toast } from 'sonner'
@@ -159,8 +159,7 @@ export default function ResetPassword() {
                 <label className="text-sm font-medium text-foreground/80 flex items-center gap-2">
                   <Lock size={14} /> Nova Senha
                 </label>
-                <Input
-                  type="password"
+                <PasswordInput
                   placeholder="••••••••"
                   autoComplete="new-password"
                   value={formData.password}
@@ -175,8 +174,7 @@ export default function ResetPassword() {
                 <label className="text-sm font-medium text-foreground/80 flex items-center gap-2">
                   <Lock size={14} /> Confirmar Nova Senha
                 </label>
-                <Input
-                  type="password"
+                <PasswordInput
                   placeholder="••••••••"
                   autoComplete="new-password"
                   value={formData.confirmPassword}
